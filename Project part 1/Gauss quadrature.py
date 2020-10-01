@@ -16,6 +16,7 @@ from scipy.special import roots_legendre
 def quadrature1D(a, b, Nq, g):
     z_q, rho_q = roots_legendre(Nq)
 
+
     I = (b - a) / 2 * np.sum(rho_q * g(0.5 * (b - a) * z_q + 0.5 * (b + a)))
     return I
 
@@ -38,4 +39,4 @@ def test_quadrature1D():
 """test_quadrature1D()
 g = lambda x: np.exp(x)
 a = np.array([1, 0])
-b = np.array([2, 0])
+b = np.array([2, 0])"""
