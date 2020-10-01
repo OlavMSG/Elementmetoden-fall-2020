@@ -4,12 +4,6 @@ Created on 29.09.2020
 
 @author: Olav Milian
 """
-# -*- coding: utf-8 -*-
-"""
-Created on 29.09.2020
-
-@author: Olav Milian
-"""
 import numpy as np
 from scipy.special import roots_legendre
 from scipy.integrate import dblquad
