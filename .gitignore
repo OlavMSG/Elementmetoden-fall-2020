@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# some other files
+Hand_in1.ipynb
+workspace.xml
