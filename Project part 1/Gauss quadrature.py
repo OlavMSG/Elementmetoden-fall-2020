@@ -8,7 +8,8 @@ import numpy as np
 from scipy.special import roots_legendre
 from scipy.integrate import dblquad
 
-def quadrature1D(a, b, Nq, g):
+
+def quadrature1D(a, b, Nq, g, line=False):
     # Weights and gaussian quadrature points
     """
     if Nq == 1:
@@ -32,13 +33,28 @@ def quadrature1D(a, b, Nq, g):
     """
 
     z_q, rho_q = roots_legendre(Nq)
-
-    I = (b - a) / 2 * np.sum(rho_q * g(0.5 * (b - a) * z_q + 0.5 * (b + a)))
+    # check if we have a line integral
+    if line:
+        try:
+            # parameterization of the line C between a and b,
+            # x = t, y = mt+c, t_0 = a[0], t_end = b[0]
+            # r(t) = (t, mt+c), |r'(t)| = sqrt(1 + m^2)
+            # int_C g(x, y) ds = int_{t_0}^t_end g(r(t)) |r'(t)| dt = sqrt(1 + m^2)  int_{t_0}^t_end g(t, mt + c) dt
+            t_0 = a[0]
+            t_end = b[0]
+            m = (b[1] - a[1]) / (t_end - t_0)
+            c = b[1] - m * t_end
+            g2 = lambda t: g(t, m * t + c)
+            I = np.sqrt(1 + m * m) * (t_end - t_0) / 2 \
+                * np.sum(rho_q * g2(0.5 * (t_end - t_0) * z_q + 0.5 * (t_end + t_0)))
+        except TypeError:
+            raise TypeError("a and b must be list or tuple for a line integral")
+    else:
+        I = (b - a) / 2 * np.sum(rho_q * g(0.5 * (b - a) * z_q + 0.5 * (b + a)))
     return I
 
 
 def quadrature2d(p1, p2, p3, Nq, g):
-
     if Nq not in (1, 3, 4):
         raise ValueError("Nq is not 1, 3 or 4. Nq =" + "{.}".format(Nq))
 
@@ -58,8 +74,8 @@ def quadrature2d(p1, p2, p3, Nq, g):
         Z = np.array([[0.5, 0.5, 0], [0.5, 0, 0.5], [0, 0.5, 0.5]])
         rho = np.ones(1) / 3
     if Nq == 4:
-        Z = np.array([[1/3, 1/3, 1/3], [3/5, 1/5, 1/5], [1/5, 3/5, 1/5], [1/5, 1/5, 3/5]])
-        rho = np.array([-9/16, 25/48, 25/48, 25/48])
+        Z = np.array([[1 / 3, 1 / 3, 1 / 3], [3 / 5, 1 / 5, 1 / 5], [1 / 5, 3 / 5, 1 / 5], [1 / 5, 1 / 5, 3 / 5]])
+        rho = np.array([-9 / 16, 25 / 48, 25 / 48, 25 / 48])
     # determinant of the Jacobi matrix
     det_Jac = (p1[0] - p3[0]) * (p2[1] - p3[1]) - (p2[0] - p3[0]) * (p1[1] - p3[1])
     # area of the triangle
@@ -74,26 +90,36 @@ def quadrature2d(p1, p2, p3, Nq, g):
     I = Area * np.sum(rho * g(x, y))
     return I
 
-def test_quadrature1D():
 
-    g = lambda x: np.exp(x)
-    I_exact = (np.e - 1) * np.e  # integral e^x dx x=1 to x=2
+def test_quadrature1D(line=False):
 
-    a = 1
-    b = 2
+    if not line:
+        I_exact = (np.e - 1) * np.e  # integral e^x dx x=1 to x=2
+        g = lambda x: np.exp(x)
+        a = 1
+        b = 2
+    if line:
+        print("Testing line integral")
+        # integral of g from (0,0) to (2,2)
+        # int_C g ds = sqrt(1+1) int_{0}^2 g(t, 1*t) dt
+        I_exact = (np.e ** 4 - 1) / np.sqrt(2)
+        g = lambda x, y: np.exp(x + y)
+        a = [0, 0]
+        b = [2, 2]
     for Nq in range(1, 5):
-        I = quadrature1D(a, b, Nq, g)
-        print("Nq = "+ "{:}".format(Nq))
+        I = quadrature1D(a, b, Nq, g, line=line)
+        print("Nq = " + "{:}".format(Nq))
         print("Using the " + "{:}".format(Nq) + "-rule I = " + "{:}".format(I))
         print("The true value of I is " + "{:}".format(I_exact))
         print("The abs. error is " + "{:}".format(np.abs(I - I_exact)))
-        print("-"*40)
+        print("-" * 40)
+
 
 def test_quadrature2d(Itegrate_exact=False):
     # Testing:
     g = lambda x, y: np.log(x + y)
 
-    I_exact= 1.16542
+    I_exact = 1.16542
     if Itegrate_exact:
         print("Using scipy.integrate.dblquad to get I_exact")
         # y goes from 0.5*x-0.5 to x-1 as x goes from 1 to 3
@@ -113,10 +139,8 @@ def test_quadrature2d(Itegrate_exact=False):
         print("-" * 40)
 
 
-
-
 if __name__ == "__main__":
     test_quadrature1D()
+    test_quadrature1D(line=True)
     test_quadrature2d()
     test_quadrature2d(True)
-
