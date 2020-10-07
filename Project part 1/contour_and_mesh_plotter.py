@@ -34,30 +34,35 @@ def contourplot(N, numerical_solution, BC_type, u_exact_func, save=False):
     u_exact = u_exact_func(x, y)
 
     # Create plot of numerical solution
-    plt.figure(figsize=(20, 7))
+    plt.figure(figsize=(21, 7))
     plt.subplot(1, 3, 1)
     plt.gca().set_aspect('equal')
     plt.tricontourf(x, y, tri, numerical_solution)
     plt.colorbar()
-    plt.title('Numerical solution for N=' + str(N) + ' with ' + str(BC_type) + ' B.C')
+    plt.title('Numerical solution for N=' + str(N) + '\nwith ' + str(BC_type) + ' B.C')
 
     # Create plot of analytical solution
     plt.subplot(1, 3, 2)
     plt.gca().set_aspect('equal')
     plt.tricontourf(x, y, tri, u_exact)
     plt.colorbar()
-    plt.title('Exact solution for N=' + str(N) + ' with ' + str(BC_type) + ' B.C')
+    plt.title('Exact solution for N=' + str(N) + '\nwith ' + str(BC_type) + ' B.C')
 
     # Create plot of difference between the two solutions
     plt.subplot(1, 3, 3)
     plt.gca().set_aspect('equal')
     plt.tricontourf(x, y, tri, np.abs(u_exact - numerical_solution))
     plt.colorbar()
-    plt.title('Error for N=' + str(N) + ' with ' + str(BC_type) + ' B.C.')
+
+    """
+    plt.plot(np.abs(u_exact - numerical_solution))"""
+
+    plt.title('Error for N=' + str(N) + '\nwith ' + str(BC_type) + ' B.C.')
 
     if save:
         save_name = "N=" + str(N) + "_with_" + str(BC_type) + "_BC"
         plt.savefig(save_name + ".pdf")
+    plt.show()
 
 def meshplot(N_list, nCols=3, save=False):
     # if N_list is just an int
