@@ -92,7 +92,6 @@ def quadrature2d(p1, p2, p3, Nq, g):
 
 
 def test_quadrature1D(line=False):
-
     if not line:
         I_exact = (np.e - 1) * np.e  # integral e^x dx x=1 to x=2
         g = lambda x: np.exp(x)

@@ -26,41 +26,41 @@ def GetDisc(N):
 		return
 
 	# Defining auxiliary variables.
-	M,r,alpha,theta = CircleData(N)
+	M, r, alpha, theta = CircleData(N)
 
 	# Generating the nodal points.
-	p = NodalPoints(M,N,alpha,theta,r)
+	p = NodalPoints(M, N, alpha, theta, r)
 
 	# Generating the elements.
 	mesh = spsa.Delaunay(p)
 	tri = mesh.simplices
 
 	# Generating the boundary elements.
-	edge = FreeBoundary(N,alpha)
+	edge = FreeBoundary(N, alpha)
 
-	return p,tri,edge
+	return p, tri, edge
 
-def NodalPoints(M,N,alpha,theta,r):
+def NodalPoints(M, N, alpha, theta, r):
 	# Auxiliary function for generating nodal points.
-	p = np.zeros((N,2))
+	p = np.zeros((N, 2))
 	k = 1
-	for i in range(1,M+1):
+	for i in range(1, M+1):
 		t = theta[i]
-		for j in range(0,alpha[i]):
-			p[k,:] = [np.cos(t)*r[i],np.sin(t)*r[i]]
+		for j in range(0, alpha[i]):
+			p[k, :] = [np.cos(t) * r[i], np.sin(t) * r[i]]
 			t += 2*np.pi/alpha[i]
 			k += 1
 
 	return p
 
 
-def FreeBoundary(N,alpha):
+def FreeBoundary(N, alpha):
 	# Auxiliary function for generating boundary nodes.
-	E = np.arange(N-alpha[-1]+1,N+1)
-	edge = np.zeros((len(E),2),dtype=np.int)
-	for i in range(0,len(E)):
-		edge[i,:] = [E[i],E[i]+1]
-	edge[-1,-1] = N-alpha[-1]+1
+	E = np.arange(N-alpha[-1] + 1, N + 1)
+	edge = np.zeros((len(E), 2), dtype=np.int)
+	for i in range(0, len(E)):
+		edge[i, :] = [E[i], E[i] + 1]
+	edge[-1, -1] = N-alpha[-1] + 1
 	edge -= 1
 
 	return edge
@@ -71,12 +71,12 @@ def CircleData(N):
 	M = np.int(np.floor(np.sqrt(N/np.pi)))
 
 	# Radius of the different circles.
-	r = np.linspace(0,1,M+1)
+	r = np.linspace(0, 1, M+1)
 
 	# Number of DOF in each circle.
 	alpha_temp = np.floor((2*np.pi*M)*r)
-	alpha = np.zeros(len(alpha_temp),dtype=np.int)
-	for i in range(0,len(alpha_temp)):
+	alpha = np.zeros(len(alpha_temp), dtype=np.int)
+	for i in range(0, len(alpha_temp)):
 		alpha[i] = np.int(alpha_temp[i])
 
 	# Fine-tuning to get the right amount of DOF.
@@ -94,5 +94,7 @@ def CircleData(N):
 		alpha[-1] += 1
 
 	# Creating the starting angle.
-	theta = np.pi/alpha
+	theta = np.pi / alpha
 	theta[0:len(alpha):2] = 0
+
+	return M, r, alpha, theta
