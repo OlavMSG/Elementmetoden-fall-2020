@@ -6,6 +6,7 @@ Created on 07.10.2020
 """
 import numpy as np
 import scipy.sparse as sparse
+from scipy.sparse.linalg import spsolve
 from getdisc import GetDisc
 from Gauss_quadrature import quadrature2d
 from contour_and_mesh_plotter import contourplot
@@ -59,7 +60,7 @@ def Dirichlet(N, f, epsilon=1e-6):
             F[-1] = 0
             A[k, k] = 1 / epsilon
             A[-1, -1] = 1 / epsilon
-    return sparse.linalg.spsolve(A.tocsr(), F)
+    return spsolve(A.tocsr(), F)
 
 if __name__ == "__main__":
     # source function
