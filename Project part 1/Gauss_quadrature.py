@@ -85,7 +85,6 @@ def quadrature2d(p1, p2, p3, Nq, g):
     # mapping (xhi1, xhi2, xhi3) to (x, y) given matrix of xhi-s Z
     x = p1[0] * Z[:, 0] + p2[0] * Z[:, 1] + p3[0] * Z[:, 2]
     y = p1[1] * Z[:, 0] + p2[1] * Z[:, 1] + p3[1] * Z[:, 2]
-
     # Calculating the Gaussian qudrature summation formula
     I = Area * np.sum(rho * g(x, y))
     return I
