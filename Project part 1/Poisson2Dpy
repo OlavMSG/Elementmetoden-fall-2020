@@ -16,8 +16,7 @@ def Dirichlet(N, f, epsilon=1e-6):
     # solve Au = F using Dirichlet b.c.
     p, tri, edge = GetDisc(N)
     A = sparse.lil_matrix((N, N))
-    F = np.zeros(N)
-    F_local = np.zeros(3)
+    F = np.zeros(N, dtype=np.float)
 
     for k in range(len(tri)):
         # calculate basis functions, gradient of jacobian etc.
@@ -26,7 +25,7 @@ def Dirichlet(N, f, epsilon=1e-6):
         p1, p2, p3 = p[nk[0], :], p[nk[1], :], p[nk[2], :]
         # row: [1, Cx, Cy]
         Mk = np.array([[1, p1[0], p1[1]], [1, p2[0], p2[1]], [1, p3[0], p3[1]]])
-        Ck = np.linalg.solve(Mk, np.eye(3))
+        Ck = np.linalg.inv(Mk)  # here faster than solving Mk @ Ck = I_3
         # phi_1 = [1, x, y] @ Ck[:,0]
         # phi_2 = [1, x, y] @ Ck[:,1]
         # phi_3 = [1, x, y] @ Ck[:,2]
@@ -45,6 +44,7 @@ def Dirichlet(N, f, epsilon=1e-6):
         A[np.ix_(tri[k, :], tri[k, :])] += Ak
 
         # Calculate the local load vector
+        F_local = np.zeros(3, dtype=np.float)
         for i in range(3):
             f_phi_i = lambda x, y: f(x, y) * phi(x, y)[i]
             F_local[i] = quadrature2d(p1, p2, p3, 4, f_phi_i)

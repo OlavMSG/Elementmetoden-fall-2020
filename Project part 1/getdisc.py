@@ -44,11 +44,11 @@ def NodalPoints(M, N, alpha, theta, r):
 	# Auxiliary function for generating nodal points.
 	p = np.zeros((N, 2))
 	k = 1
-	for i in range(1, M+1):
+	for i in range(1, M + 1):
 		t = theta[i]
 		for j in range(0, alpha[i]):
 			p[k, :] = [np.cos(t) * r[i], np.sin(t) * r[i]]
-			t += 2*np.pi/alpha[i]
+			t += 2 * np.pi / alpha[i]
 			k += 1
 
 	return p
@@ -68,10 +68,10 @@ def FreeBoundary(N, alpha):
 
 def CircleData(N):
 	# Number of outward circles,excluding the origin.
-	M = np.int(np.floor(np.sqrt(N/np.pi)))
+	M = np.int(np.floor(np.sqrt(N / np.pi)))
 
 	# Radius of the different circles.
-	r = np.linspace(0, 1, M+1)
+	r = np.linspace(0, 1, M + 1)
 
 	# Number of DOF in each circle.
 	alpha_temp = np.floor((2*np.pi*M)*r)
