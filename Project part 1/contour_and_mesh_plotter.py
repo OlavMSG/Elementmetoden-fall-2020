@@ -64,6 +64,7 @@ def contourplot(N, numerical_solution, BC_type, u_exact_func, save=False):
         plt.savefig(save_name + ".pdf")
     plt.show()
 
+
 def meshplot(N_list, nCols=3, save=False):
     # if N_list is just an int
     if isinstance(N_list, int):

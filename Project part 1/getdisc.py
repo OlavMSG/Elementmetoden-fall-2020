@@ -40,6 +40,7 @@ def GetDisc(N):
 
 	return p, tri, edge
 
+
 def NodalPoints(M, N, alpha, theta, r):
 	# Auxiliary function for generating nodal points.
 	p = np.zeros((N, 2))
