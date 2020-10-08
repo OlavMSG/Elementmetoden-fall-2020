@@ -9,7 +9,7 @@ from scipy.special import roots_legendre
 from scipy.integrate import dblquad
 
 
-def quadrature1D(a, b, Nq, g, line=False):
+def quadrature1D(a, b, Nq, g, line_int=False):
     # Weights and gaussian quadrature points
     """
     if Nq == 1:
@@ -34,7 +34,7 @@ def quadrature1D(a, b, Nq, g, line=False):
 
     z_q, rho_q = roots_legendre(Nq)
     # check if we have a line integral
-    if line:
+    if line_int:
         try:
             # parameterization of the line C between a and b,
             # x = t, y = mt+c, t_0 = a[0], t_end = b[0]
@@ -54,7 +54,7 @@ def quadrature1D(a, b, Nq, g, line=False):
     return I
 
 
-def quadrature2d(p1, p2, p3, Nq, g):
+def quadrature2D(p1, p2, p3, Nq, g):
     if Nq not in (1, 3, 4):
         raise ValueError("Nq is not 1, 3 or 4. Nq =" + "{.}".format(Nq))
 
@@ -90,13 +90,13 @@ def quadrature2d(p1, p2, p3, Nq, g):
     return I
 
 
-def test_quadrature1D(line=False):
-    if not line:
+def test_quadrature1D(line_int=False):
+    if not line_int:
         I_exact = (np.e - 1) * np.e  # integral e^x dx x=1 to x=2
         g = lambda x: np.exp(x)
         a = 1
         b = 2
-    if line:
+    if line_int:
         print("Testing line integral")
         # integral of g from (0,0) to (2,2)
         # int_C g ds = sqrt(1+1) int_{0}^2 g(t, 1*t) dt
@@ -105,7 +105,7 @@ def test_quadrature1D(line=False):
         a = [0, 0]
         b = [2, 2]
     for Nq in range(1, 5):
-        I = quadrature1D(a, b, Nq, g, line=line)
+        I = quadrature1D(a, b, Nq, g, line_int=line_int)
         print("Nq = " + "{:}".format(Nq))
         print("Using the " + "{:}".format(Nq) + "-rule I = " + "{:}".format(I))
         print("The true value of I is " + "{:}".format(I_exact))
@@ -113,7 +113,7 @@ def test_quadrature1D(line=False):
         print("-" * 40)
 
 
-def test_quadrature2d(Itegrate_exact=False):
+def test_quadrature2D(Itegrate_exact=False):
     # Testing:
     g = lambda x, y: np.log(x + y)
 
@@ -129,16 +129,16 @@ def test_quadrature2d(Itegrate_exact=False):
 
     Nq_list = [1, 3, 4]
     for Nq in Nq_list:
-        I = quadrature2d(p1, p2, p3, Nq, g)
+        I = quadrature2D(p1, p2, p3, Nq, g)
         print("Nq = " + "{:}".format(Nq))
         print("Using the " + "{:}".format(Nq) + "-rule I = " + "{:}".format(I))
         print("The true value of I is " + "{:}".format(I_exact))
         print("The abs. error is " + "{:}".format(np.abs(I - I_exact)))
         print("-" * 40)
 
-
 if __name__ == "__main__":
     test_quadrature1D()
-    test_quadrature1D(line=True)
-    test_quadrature2d()
-    test_quadrature2d(True)
+    test_quadrature1D(line_int=True)
+    print("*"*40)
+    test_quadrature2D()
+    test_quadrature2D(True)

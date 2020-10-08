@@ -30,7 +30,8 @@ def contourplot(N, numerical_solution, BC_type, u_exact_func, save=False):
           + str(min(numerical_solution)) + ' for ' + str(A) + ' B.C')"""
 
     # x and y coordinates
-    x, y = p[:, 0], p[:, 1]
+    x = p[:, 0]
+    y = p[:, 1]
     u_exact = u_exact_func(x, y)
 
     # Create plot of numerical solution
@@ -60,7 +61,7 @@ def contourplot(N, numerical_solution, BC_type, u_exact_func, save=False):
     plt.title('Error for N=' + str(N) + '\nwith ' + str(BC_type) + ' B.C.')
 
     if save:
-        save_name = "N=" + str(N) + "_with_" + str(BC_type) + "_BC"
+        save_name = BC_type + "_N=" + str(N) + "_with_" + str(BC_type) + "_BC"
         plt.savefig(save_name + ".pdf")
     plt.show()
 
@@ -112,6 +113,6 @@ def meshplot(N_list, nCols=3, save=False):
 
 
 if __name__ == "__main__":
-    N_list = [100, 500, 1000]
+    N_list = [10, 20, 100, 500, 1000]
     meshplot(N_list)
 
