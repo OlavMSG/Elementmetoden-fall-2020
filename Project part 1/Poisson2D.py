@@ -9,27 +9,8 @@ import scipy.sparse as sparse
 from scipy.sparse.linalg import spsolve
 from scipy.special import roots_legendre
 from getdisc import GetDisc
-from Gauss_quadrature import quadrature2D, quadrature1D
+from Gauss_quadrature import lineintegral, quadrature2D
 from contour_and_mesh_plotter import contourplot
-
-def lineintegral(a, b, Nq, g):
-    # function to handle the lineintegral with local basis functions implemented
-    # Weights and gaussian quadrature points
-    z_q, rho_q = roots_legendre(Nq)
-    a = np.asarray(a)
-    b = np.asarray(b)
-    # parameterization of the line C between a and b,
-    # r(t) = (1-t)a/2 + (1+t)b/2,
-    x = lambda t: ((1 - t) * a[0] + (1 + t) * b[0]) / 2
-    y = lambda t: ((1 - t) * a[1] + (1 + t) * b[1]) / 2
-    # r'(t) = -a/2+ b/2 = (b-a)/2, 2*|r'(t)| = norm(b-a)
-    abs_r_t_2 = np.linalg.norm(b - a, ord=2)
-    # g times local basis
-    g2 = lambda t: g(x(t), y(t)) * (1 + t) / 2
-    # int_C g(x, y) * phi(x, y) ds = int_{-1}^1 g(r(t)) * phi(r(t)) |r'(t)| * 2 dt
-    # = norm(b-a)  int_{-1}^1 g(r(t)) * phi(r(t)) dt
-    I = abs_r_t_2 * np.sum(rho_q * g2(z_q))
-    return I
 
 
 def Base_Poisson2D(p, tri, f, DoSingularityCheck):
