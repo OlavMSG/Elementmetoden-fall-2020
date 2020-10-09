@@ -36,17 +36,17 @@ def quadrature1D(a, b, Nq, g, line_int=False):
     # check if we have a line integral
     if line_int:
         try:
+            a = np.asarray(a)
+            b = np.asarray(b)
             # parameterization of the line C between a and b,
-            # x = t, y = mt+c, t_0 = a[0], t_end = b[0]
-            # r(t) = (t, mt+c), |r'(t)| = sqrt(1 + m^2)
-            # int_C g(x, y) ds = int_{t_0}^t_end g(r(t)) |r'(t)| dt = sqrt(1 + m^2)  int_{t_0}^t_end g(t, mt + c) dt
-            t_0 = a[0]
-            t_end = b[0]
-            m = (b[1] - a[1]) / (t_end - t_0)
-            c = b[1] - m * t_end
-            g2 = lambda t: g(t, m * t + c)
-            I = np.sqrt(1 + m * m) * (t_end - t_0) / 2 \
-                * np.sum(rho_q * g2(0.5 * (t_end - t_0) * z_q + 0.5 * (t_end + t_0)))
+            # r(t) = (1-t)a/2 + (1+t)b/2,
+            x = lambda t: ((1 - t) * a[0] + (1 + t) * b[0]) / 2
+            y = lambda t: ((1 - t) * a[1] + (1 + t) * b[1]) / 2
+            # r'(t) = -a/2+ b/2 = (b-a)/2, |r'(t)| = norm(b-a) / 2
+            abs_r_t = np.linalg.norm(b - a, ord=2) / 2
+            # int_C g(x, y) ds = int_{-1}^1 g(r(t)) |r'(t)| dt = norm(b-a)/2  int_{-1}^1 g(r(t)) dt
+            g2 = lambda t: g(x(t), y(t))
+            I = abs_r_t * np.sum(rho_q * g2(z_q))
         except TypeError:
             raise TypeError("a and b must be list or tuple for a line integral")
     else:
