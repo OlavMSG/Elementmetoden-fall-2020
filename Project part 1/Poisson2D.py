@@ -145,15 +145,21 @@ if __name__ == "__main__":
     # exact solution
     u_exact = lambda x, y:  np.sin(2 * np.pi * (x * x + y * y))
 
-    N = 100
+    # save the plots?
+    save = False
+    # chose the N
+    N = 500
+    # get numerical solution
     U_dir = Dirichlet(N, f)
-    # Create plots
+    # Create plot
     BC_type = 'Dirichlet'
-    contourplot(N, U_dir, BC_type, u_exact)
+    contourplot(N, U_dir, BC_type, u_exact, save=save)
     print("-"*40)
+    # get numerical solution
     U_mix = Mixed(N, f, g)
+    # Create plot
     BC_type = "Mixed"
-    contourplot(N, U_mix, BC_type, u_exact)
+    contourplot(N, U_mix, BC_type, u_exact, save=save)
 
 
 

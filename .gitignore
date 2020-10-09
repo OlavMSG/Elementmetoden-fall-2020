@@ -127,8 +127,16 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
+# plots
+Mesh_for_N.pdf
+Mixed_N=500_with_Mixed_BC.pdf
+Dirichlet_N=500_with_Dirichlet_BC.pdf
+Mixed_N=1000_with_Mixed_BC.pdf
+Dirichlet_N=1000_with_Dirichlet_BC.pdf
+Mixed_N=2000_with_Mixed_BC.pdf
+Dirichlet_N=2000_with_Dirichlet_BC.pdf
 # some other files
 Hand_in1.ipynb
-Hand_in1_Mixed.ipynb
+Hand_in1_Mixed_bc.ipynb
 workspace.xml
+

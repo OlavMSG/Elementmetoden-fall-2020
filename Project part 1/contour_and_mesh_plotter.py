@@ -113,6 +113,10 @@ def meshplot(N_list, nCols=3, save=False):
 
 
 if __name__ == "__main__":
-    N_list = [10, 20, 100, 500, 1000]
-    meshplot(N_list)
+    # save the plot as pdf?
+    save = False
+    # list of N to plot for
+    N_list = [500, 1000, 2000]
+    # make a meshplot
+    meshplot(N_list, save=save)
 
