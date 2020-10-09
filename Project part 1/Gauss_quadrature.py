@@ -63,14 +63,16 @@ def lineintegral(a, b, Nq, g):
     # r(t) = (1-t)a/2 + (1+t)b/2,
     x = lambda t: ((1 - t) * a[0] + (1 + t) * b[0]) / 2
     y = lambda t: ((1 - t) * a[1] + (1 + t) * b[1]) / 2
-    # r'(t) = -a/2+ b/2 = (b-a)/2, 2*|r'(t)| = norm(b-a)
-    abs_r_t_2 = np.linalg.norm(b - a, ord=2)
+    # r'(t) = -a/2+ b/2 = (b-a)/2, |r'(t)| = norm(b-a)
+    abs_r_t = np.linalg.norm(b - a, ord=2) / 2
     # g times local basis
-    g2 = lambda t: g(x(t), y(t)) * (1 + t) / 2
+    g1 = lambda t: g(x(t), y(t)) * (1 + t) / 2  # for a
+    g2 = lambda t: g(x(t), y(t)) * (1 - t) / 2  # for b
     # int_C g(x, y) * phi(x, y) ds = int_{-1}^1 g(r(t)) * phi(r(t)) |r'(t)| * 2 dt
     # = norm(b-a)  int_{-1}^1 g(r(t)) * phi(r(t)) dt
-    I = abs_r_t_2 * np.sum(rho_q * g2(z_q))
-    return I
+    I1 = abs_r_t * np.sum(rho_q * g1(z_q))  # load for a
+    I2 = abs_r_t * np.sum(rho_q * g2(z_q))  # load for b
+    return I1, I2
 
 
 def quadrature2D(p1, p2, p3, Nq, g):

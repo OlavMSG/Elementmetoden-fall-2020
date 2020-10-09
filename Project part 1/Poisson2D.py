@@ -127,7 +127,7 @@ def Mixed(N, f, g, epsilon=1e-6, DoSingularityCheck=True):
     for ek in neu:
         p1 = p[ek[0]]
         p2 = p[ek[1]]
-        F[ek[0]] += lineintegral(p1, p2, 4, g)
+        F[ek] += lineintegral(p1, p2, 4, g)
 
     # chose to use Dirichlet
     for ek in both:
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     # save the plots?
     save = False
     # chose the N
-    N = 500
+    N = 1000
     # get numerical solution
     U_dir = Dirichlet(N, f)
     # Create plot
