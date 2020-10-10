@@ -129,6 +129,8 @@ dmypy.json
 .pyre/
 # plots
 Mesh_for_N.pdf
+Mixed_N=100_with_Mixed_BC.pdf
+Dirichlet_N=100_with_Dirichlet_BC.pdf
 Mixed_N=500_with_Mixed_BC.pdf
 Dirichlet_N=500_with_Dirichlet_BC.pdf
 Mixed_N=1000_with_Mixed_BC.pdf
