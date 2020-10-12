@@ -17,7 +17,7 @@ from contour_and_mesh_plotter import contourplot
 
 def singularity_check(A):
     """
-    Funcrion to check i A is singular
+    Function to check i A is singular
 
     Parameters
     ----------
@@ -53,7 +53,7 @@ def lineintegral(a, b, Nq, g):
     b : list/tuple
         endpoint of line in the integration.
     Nq : int
-        How many points to use in the nummerical integration, Nq-point rule.
+        How many points to use in the numerical integration, Nq-point rule.
     g : function pointer
         pointer to function to integrate.
 
@@ -142,7 +142,7 @@ def Base_Poisson2D(N, p, tri, f, DoSingularityCheck=True):
     tri : list
         Elements. Index to the three corners of element i given in row i.
     f : function pointer
-        pointer to function to be equal to on the rigth hand side.
+        pointer to function to be equal to on the right hand side.
     DoSingularityCheck : bool, optional
         Call the singularity_check function to check i A is singular. The default is True.
 
@@ -208,11 +208,11 @@ def Dirichlet_Poisson2D(N, f, g_D, DoSingularityCheck=True):
     N : int
         Number of nodes in the mesh.
     f : function pointer
-        pointer to function to be equal to on the rigth hand side.
+        pointer to function to be equal to on the right hand side.
     g_D : function pointer
         pointer to function for the Dirichlet B.C.
     DoSingularityCheck : bool, optional
-        Call the singularity_check function to check i A is singular before implimetation of B.C. The default is True.
+        Call the singularity_check function to check i A is singular before implementation of B.C. The default is True.
 
     Returns
     -------
@@ -250,18 +250,18 @@ def Mixed_Poisson2D(N, f, g_N, g_D, DoSingularityCheck=True):
     N : int
         Number of nodes in the mesh.
     f : function pointer
-        pointer to function to be equal to on the rigth hand side.
+        pointer to function to be equal to on the right hand side.
     g_N : function pointer
         pointer to function for the Neumann B.C.
     g_D : function pointer
         pointer to function for the Dirichlet B.C.
     DoSingularityCheck : bool, optional
-        Call the singularity_check function to check i A is singular before implimetation of B.C. The default is True.
+        Call the singularity_check function to check i A is singular before implementation of B.C. The default is True.
 
     Returns
     -------
     u_h : numpy array
-        nummerical solution.
+        numerical solution.
 
     """
     # solve Au = F using Dirichlet b.c.
@@ -346,13 +346,13 @@ def Dirichlet2D(N, f, u_exact, g_D, DoSingularityCheck=True, save=False):
     N : int
         Number of nodes in the mesh.
     f : function pointer
-        pointer to function to be equal to on the rigth hand side.
+        pointer to function to be equal to on the right hand side.
     u_exact : function pointer
         Pointer to the function for the exact solution.
     g_D : function pointer
         pointer to function for the Dirichlet B.C.
     DoSingularityCheck : bool, optional
-        Call the singularity_check function to check i A is singular before implimetation of B.C. The default is True.
+        Call the singularity_check function to check i A is singular before implementation of B.C. The default is True.
     save : bool, optional
         Will the plot be saved in the plot folder. The default is False.
         Note: the plot folder must exist!
@@ -380,7 +380,7 @@ def Mixed2D(N, f, u_exact, g_N, g_D, DoSingularityCheck=True, save=False):
     N : int
         Number of nodes in the mesh.
     f : function pointer
-        pointer to function to be equal to on the rigth hand side.
+        pointer to function to be equal to on the right hand side.
     u_exact : function pointer
         Pointer to the function for the exact solution.
     g_N : function pointer
@@ -388,7 +388,7 @@ def Mixed2D(N, f, u_exact, g_N, g_D, DoSingularityCheck=True, save=False):
     g_D : function pointer
         pointer to function for the Dirichlet B.C.
     DoSingularityCheck : bool, optional
-        Call the singularity_check function to check i A is singular before implimetation of B.C. The default is True.
+        Call the singularity_check function to check i A is singular before implementation of B.C. The default is True.
     save : bool, optional
         Will the plot be saved in the plot folder. The default is False.
         Note: the plot folder must exist!

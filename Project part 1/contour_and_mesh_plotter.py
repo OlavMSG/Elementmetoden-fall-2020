@@ -22,14 +22,14 @@ plt.rcParams.update(newparams)
 
 def contourplot(N, numerical_solution, BC_type, u_exact_func, save=False):
     """
-    Function to make three contorplots*: the nummerical solution, the exact solution and the absoulute error
+    Function to make three contourplots: the numerical solution, the exact solution and the absolute error
 
     Parameters
     ----------
     N : int
         Number of nodes in the mesh.
     numerical_solution : numpy array (list)
-        The nummerical solution to the problem solved with B.C type.
+        The numerical solution to the problem solved with B.C type.
     BC_type : str
         A string containing the name of the B.C. type.
     u_exact_func : function pointer

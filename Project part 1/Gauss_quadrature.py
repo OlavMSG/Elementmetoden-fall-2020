@@ -12,7 +12,7 @@ from scipy.special import roots_legendre
 
 def quadrature1D(a, b, Nq, g, line_int=False):
     """
-    Function to do a nummerical 1D integral: line_int = False
+    Function to do a numerical 1D integral: line_int = False
     or a lineintegral: line_int = True
     Both using Gaussian quadrature
 
@@ -23,7 +23,7 @@ def quadrature1D(a, b, Nq, g, line_int=False):
     b : float or list/tuple
         upper bound or endpoint of line in the integration.
     Nq : int
-        How many points to use in the nummerical integration, Nq-point rule.
+        How many points to use in the numerical integration, Nq-point rule.
     g : function pointer
         pointer to function to integrate.
     line_int : bool, optional
@@ -32,7 +32,7 @@ def quadrature1D(a, b, Nq, g, line_int=False):
     Raises
     ------
     TypeError
-        If line_int=True and a or b are not in acepted form/type, meaning a and b are not list or tuple
+        If line_int=True and a or b are not in accepted form/type, meaning a and b are not list or tuple
 
     Returns
     -------
@@ -76,20 +76,20 @@ def quadrature1D(a, b, Nq, g, line_int=False):
             abs_r_t = np.linalg.norm(b - a, ord=2) / 2
             # int_C g(x, y) ds = int_{-1}^1 g(r(t)) |r'(t)| dt = norm(b-a)/2  int_{-1}^1 g(r(t)) dt
             g2 = lambda t: g(x(t), y(t))
-            # compute the integral nummerically
+            # compute the integral numerically
             I = abs_r_t * np.sum(rho_q * g2(z_q))
         except TypeError:
-            # raise an error if a and b are not in acepted form/type.
+            # raise an error if a and b are not in accepted form/type.
             raise TypeError("a and b must be list or tuple for a line integral")
     else:
-        # compute the integral nummerically
+        # compute the integral numerically
         I = (b - a) / 2 * np.sum(rho_q * g(0.5 * (b - a) * z_q + 0.5 * (b + a)))
     return I
 
 
 def quadrature2D(p1, p2, p3, Nq, g):
     """
-    Function to do a nummerical 2D integral using Gaussian quadrature on a triangle
+    Function to do a numerical 2D integral using Gaussian quadrature on a triangle
 
     Parameters
     ----------
@@ -100,7 +100,7 @@ def quadrature2D(p1, p2, p3, Nq, g):
     p3 : list/tuple
         Third vertex of the triangle.
     Nq : int
-        How many points to use in the nummerical integration, Nq-point rule.
+        How many points to use in the numerical integration, Nq-point rule.
     g : function pointer
         pointer to function to integrate.
 

@@ -22,7 +22,7 @@ import scipy.spatial as spsa
 def GetDisc(N):
 	# Controlling the input.
 	if N < 4:
-		print("Error. N >= 4 reguired for input.")
+		print("Error. N >= 4 required for input.")
 		return
 
 	# Defining auxiliary variables.
