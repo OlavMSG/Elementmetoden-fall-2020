@@ -2,8 +2,11 @@
 """
 Created on 07.10.2020
 
-@author: Olav Milian
+@author: Olav Gran
+in collaboration with Ruben Mustad
+(based in old code by Ruben)
 """
+
 import numpy as np
 import scipy.sparse as sparse
 from scipy.sparse.linalg import spsolve
@@ -14,6 +17,19 @@ from contour_and_mesh_plotter import contourplot
 
 
 def singularity_check(A):
+    """
+    Funcrion to check i A is singular
+
+    Parameters
+    ----------
+    A : scipy.sparse.lil_matrix
+        The matrix A stored in the lil sparse format.
+
+    Returns
+    -------
+    None.
+
+    """
     # check condition number
     condA = np.linalg.cond(A.toarray())
     print("-" * 60)
@@ -28,7 +44,28 @@ def singularity_check(A):
 
 
 def lineintegral(a, b, Nq, g):
-    # function to handle the lineintegral with local basis functions implemented
+    """
+    Function to handle the lineintegral with local basis functions implemented
+
+    Parameters
+    ----------
+    a : list/tuple
+        startpoint of line in the integration.
+    b : list/tuple
+        endpoint of line in the integration.
+    Nq : int
+        How many points to use in the nummerical integration, Nq-point rule.
+    g : function pointer
+        pointer to function to integrate.
+
+    Returns
+    -------
+    I1 : float
+        Value of integral with the first basis function.
+    I2 : TYPE
+        Value of integral with the second basis function.
+
+    """
     # Weights and gaussian quadrature points
     z_q, rho_q = roots_legendre(Nq)
     a = np.asarray(a)
@@ -44,12 +81,38 @@ def lineintegral(a, b, Nq, g):
     g2 = lambda t: g(x(t), y(t)) * (1 - t) / 2  # for b
     # int_C g(x, y) * phi(x, y) ds = int_{-1}^1 g(r(t)) * phi(r(t)) |r'(t)| * 2 dt
     # = norm(b-a)  int_{-1}^1 g(r(t)) * phi(r(t)) dt
+    # compute the integrals nummerically
     I1 = abs_r_t * np.sum(rho_q * g1(z_q))  # load for a
     I2 = abs_r_t * np.sum(rho_q * g2(z_q))  # load for b
     return I1, I2
 
 
 def Split_edge_nodes(p, edge):
+    """
+    Function to split the edge-index list into a index list for the neumann B.C, Dirichlet B.C 
+    and the cases where we have both
+
+    Parameters
+    ----------
+    p : list
+        Nodal points, (x,y)-coordinates for point i given in row i.
+    edge : list
+        Elements. Index to the three corners of element i given in row i.
+        The edge of the mesh.
+
+    Returns
+    -------
+    neu : list
+        Elements. Index to the three corners of element i given in row i.
+        The Neumann edge.
+    diri : list
+        Elements. Index to the three corners of element i given in row i.
+        The Dirichlet edge
+    both : list
+        Elements. Index to the three corners of element i given in row i.
+        The edge where we have both
+
+    """
     diri = []
     neu = []
     both = []
@@ -64,14 +127,34 @@ def Split_edge_nodes(p, edge):
         else:
             both.append(ek)
 
-    neu = np.asarray(neu)
-    diri = np.asarray(diri)
-    both = np.asarray(both)
-
     return neu, diri, both
 
 
 def Base_Poisson2D(N, p, tri, f, DoSingularityCheck=True):
+    """
+    Base function to construct the Stiffness matrix and Load vector in the case of the 2D poisson problem
+
+    Parameters
+    ----------
+    N : int
+        Number of nodes in the mesh.
+    p : list
+        Nodal points, (x,y)-coordinates for point i given in row i.
+    tri : list
+        Elements. Index to the three corners of element i given in row i.
+    f : function pointer
+        pointer to function to be equal to on the rigth hand side.
+    DoSingularityCheck : bool, optional
+        Call the singularity_check function to check i A is singular. The default is True.
+
+    Returns
+    -------
+    A : scipy.sparse.lil_matrix
+        The stiffness matrix.
+    F : numpy array
+        The load vector.
+
+    """
     # Stiffness matrix
     A = sparse.lil_matrix((N, N))
     # load vector
@@ -118,7 +201,26 @@ def Base_Poisson2D(N, p, tri, f, DoSingularityCheck=True):
 
 
 def Dirichlet_Poisson2D(N, f, g_D, DoSingularityCheck=True):
-    # solve Au = F using Dirichlet b.c.
+    """
+    Function to solve Au = F using Dirichlet B.C.
+
+    Parameters
+    ----------
+    N : int
+        Number of nodes in the mesh.
+    f : function pointer
+        pointer to function to be equal to on the rigth hand side.
+    g_D : function pointer
+        pointer to function for the Dirichlet B.C.
+    DoSingularityCheck : bool, optional
+        Call the singularity_check function to check i A is singular before implimetation of B.C. The default is True.
+
+    Returns
+    -------
+    u_h : TYPE
+        DESCRIPTION.
+
+    """
     p, tri, edge = GetDisc(N)
     #   p		Nodal points, (x,y)-coordinates for point i given in row i.
     #   tri   	Elements. Index to the three corners of element i given in row i.
@@ -135,11 +237,34 @@ def Dirichlet_Poisson2D(N, f, g_D, DoSingularityCheck=True):
         A[ek, ek] = 1
         # set F[ek] = g_D
         F[ek] = g_D(*p[ek])
-
-    return spsolve(A.tocsr(), F)
+    # get u_h by solving AU = F
+    u_h = spsolve(A.tocsr(), F)
+    return u_h
 
 
 def Mixed_Poisson2D(N, f, g_N, g_D, DoSingularityCheck=True):
+    """
+    Function to solve Au = F using Mixed B.C.
+
+    Parameters
+    ----------
+    N : int
+        Number of nodes in the mesh.
+    f : function pointer
+        pointer to function to be equal to on the rigth hand side.
+    g_N : function pointer
+        pointer to function for the Neumann B.C.
+    g_D : function pointer
+        pointer to function for the Dirichlet B.C.
+    DoSingularityCheck : bool, optional
+        Call the singularity_check function to check i A is singular before implimetation of B.C. The default is True.
+
+    Returns
+    -------
+    u_h : numpy array
+        nummerical solution.
+
+    """
     # solve Au = F using Dirichlet b.c.
     p, tri, edge = GetDisc(N)
     #   p		Nodal points, (x,y)-coordinates for point i given in row i.
@@ -208,11 +333,36 @@ def Mixed_Poisson2D(N, f, g_N, g_D, DoSingularityCheck=True):
             A[ek, ek] = 1
             # set F[ek] = g_D
             F[ek] = g_D(*p[ek])
-
-    return spsolve(A.tocsr(), F)
+    # get u_h by solving AU = F
+    u_h = spsolve(A.tocsr(), F)
+    return u_h
 
 
 def Dirichlet2D(N, f, u_exact, g_D, DoSingularityCheck=True, save=False):
+    """
+    Function to solve and plot for the 2D poisson problem with Dirichlet B.C, and print info to user.
+
+    Parameters
+    ----------
+    N : int
+        Number of nodes in the mesh.
+    f : function pointer
+        pointer to function to be equal to on the rigth hand side.
+    u_exact : function pointer
+        Pointer to the function for the exact solution.
+    g_D : function pointer
+        pointer to function for the Dirichlet B.C.
+    DoSingularityCheck : bool, optional
+        Call the singularity_check function to check i A is singular before implimetation of B.C. The default is True.
+    save : bool, optional
+        Will the plot be saved in the plot folder. The default is False.
+        Note: the plot folder must exist!
+
+    Returns
+    -------
+    None.
+
+    """
     print("-" * 60)
     BC_type = 'Dirichlet'
     print(BC_type + " with N = " + str(N))
@@ -222,7 +372,33 @@ def Dirichlet2D(N, f, u_exact, g_D, DoSingularityCheck=True, save=False):
     contourplot(N, U_dir, BC_type, u_exact, save=save)
 
 
-def Mixed2D(N, f, g_N, u_exact, g_D, DoSingularityCheck=True, save=False):
+def Mixed2D(N, f, u_exact, g_N, g_D, DoSingularityCheck=True, save=False):
+    """
+    Function to solve and plot for the 2D poisson problem with Mixed B.C, and print info to user.
+
+    Parameters
+    ----------
+    N : int
+        Number of nodes in the mesh.
+    f : function pointer
+        pointer to function to be equal to on the rigth hand side.
+    u_exact : function pointer
+        Pointer to the function for the exact solution.
+    g_N : function pointer
+        pointer to function for the Neumann B.C.
+    g_D : function pointer
+        pointer to function for the Dirichlet B.C.
+    DoSingularityCheck : bool, optional
+        Call the singularity_check function to check i A is singular before implimetation of B.C. The default is True.
+    save : bool, optional
+        Will the plot be saved in the plot folder. The default is False.
+        Note: the plot folder must exist!
+
+    Returns
+    -------
+    None.
+
+    """
     print("-" * 60)
     BC_type = "Mixed"
     print(BC_type + " with N = " + str(N))
@@ -256,7 +432,7 @@ if __name__ == "__main__":
         # do Dirichlet BC
         Dirichlet2D(N, f, u_exact, g_D, DoSingularityCheck=DoSingularityCheck, save=save)
         # do Mixed BC
-        Mixed2D(N, f, g_N, u_exact, g_D, DoSingularityCheck=DoSingularityCheck, save=save)
+        Mixed2D(N, f, u_exact, g_N, g_D, DoSingularityCheck=DoSingularityCheck, save=save)
 
 
 

@@ -2,7 +2,9 @@
 """
 Created on 07.10.2020
 
-@author: Olav Milian
+@author: Olav Gran
+in collaboration with Ruben Mustad
+(based in old code by Ruben)
 """
 import numpy as np
 from matplotlib import cm
@@ -20,13 +22,30 @@ newparams = {'axes.titlesize': fontsize, 'axes.labelsize': fontsize,
 plt.rcParams.update(newparams)
 
 def contourplot(N, numerical_solution, BC_type, u_exact_func, save=False):
+    """
+    Function to make three contorplots*: the nummerical solution, the exact solution and the absoulute error
+
+    Parameters
+    ----------
+    N : int
+        Number of nodes in the mesh.
+    numerical_solution : numpy array (list)
+        The nummerical solution to the problem solved with B.C type.
+    BC_type : str
+        A string containing the name of the B.C. type.
+    u_exact_func : function pointer
+        Pointer to the function for the exact solution.
+    save : bool, optional
+        Will the plot be saved in the plot folder. The default is False.
+        Note: the plot folder must exist!
+
+    Returns
+    -------
+    None.
+
+    """
     # get the nodes, elements and edge lines
     p, tri, edge = GetDisc(N)
-
-    # get the max and min of the computed solution
-    """print('The maximum value of the computed solution is: ' + str(
-        max(numerical_solution)) + ' and the \n minimum value of the computed solution is: '
-          + str(min(numerical_solution)) + ' for ' + str(A) + ' B.C')"""
 
     # x and y coordinates
     x = p[:, 0]
@@ -44,14 +63,14 @@ def contourplot(N, numerical_solution, BC_type, u_exact_func, save=False):
     plt.gca().set_aspect('equal')
     plt.tricontourf(x, y, tri, numerical_solution, levels=levels, extend='both')
     plt.colorbar()
-    plt.title('Numerical solution for\n$N=' + str(N) + '$ with ' + str(BC_type) + ' B.C')
+    plt.title('Numerical solution, $u_h$, for\n$N=' + str(N) + '$ with ' + str(BC_type) + ' B.C')
 
     # Create plot of analytical solution
     plt.subplot(1, 3, 2)
     plt.gca().set_aspect('equal')
     plt.tricontourf(x, y, tri, u_exact, levels=levels, extend='both')
     plt.colorbar()
-    plt.title('Exact solution for\n$N=' + str(N) + '$ with ' + str(BC_type) + ' B.C')
+    plt.title('Exact solution, $u$, for\n$N=' + str(N) + '$ with ' + str(BC_type) + ' B.C')
 
     # Create plot of absolute difference between the two solutions
     plt.subplot(1, 3, 3)
@@ -59,14 +78,12 @@ def contourplot(N, numerical_solution, BC_type, u_exact_func, save=False):
     plt.tricontourf(x, y, tri, abs_err, extend='max')
     plt.colorbar()
 
-    """
-    plt.plot(np.abs(u_exact - numerical_solution))"""
-
-    plt.title('Absolute error for\n$N=' + str(N) + '$ with ' + str(BC_type) + ' B.C.')
+    plt.title('Absolute error, $|u-u_h|$, for\n$N=' + str(N) + '$ with ' + str(BC_type) + ' B.C.')
 
     # adjust
     plt.subplots_adjust(wspace=0.4)
-
+    
+    # save the plot?
     if save:
         save_name = "plot\Poisson_N=" + str(N) + "_with_" + BC_type + "_BC"
         plt.savefig(save_name + ".pdf")
@@ -74,6 +91,24 @@ def contourplot(N, numerical_solution, BC_type, u_exact_func, save=False):
 
 
 def meshplot(N_list, nCols=3, save=False):
+    """
+    Function to make plots of meshes for N in N_list
+
+    Parameters
+    ----------
+    N_list : list
+        A list containing N's to plot a mesh for.
+    nCols : int, optional
+        Number of columns in the final plot, meaning subplots per row. The default is 3.
+    save : bool, optional
+        Will the plot be saved in the plot folder. The default is False.
+        Note: the plot folder must exist!
+
+    Returns
+    -------
+    None.
+
+    """
     # if N_list is just an int
     if isinstance(N_list, int):
         N_list = [N_list]
@@ -118,7 +153,8 @@ def meshplot(N_list, nCols=3, save=False):
                 ax.set_title('Mesh for $N=' + str(N) + '$')
     # adjust
     plt.subplots_adjust(hspace=0.3, wspace=0.3)
-
+    
+    # save the plot?
     if save:
         plt.savefig("plot\Mesh_for_N.pdf")
     plt.show()

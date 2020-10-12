@@ -2,39 +2,71 @@
 """
 Created on 29.09.2020
 
-@author: Olav Milian
+@author: Olav Gran
+in collaboration with Ruben Mustad
+(based in old code by Ruben)
 """
+
 import numpy as np
 from scipy.special import roots_legendre
 
 
 def quadrature1D(a, b, Nq, g, line_int=False):
-    # Weights and gaussian quadrature points
     """
-    if Nq == 1:
-        z_q = np.zeros(1)
-        rho_q = np.ones(1) * 2
-    if Nq == 2:
-        c = np.sqrt(1 / 3)
-        z_q = np.array([-c, c])
-        rho_q = np.ones(2)
-    if Nq == 3:
-        c = np.sqrt(3 / 5)
-        z_q = np.array([-c, 0, c])
-        rho_q = np.array([5, 8, 5]) / 9
-    if Nq == 4:
-        c1 = np.sqrt((3 + 2 * np.sqrt(6 / 5)) / 7)
-        c2 = np.sqrt((3 - 2 * np.sqrt(6 / 5)) / 7)
-        z_q = np.array([-c1, -c2, c2, c1])
-        k1 = 18 - np.sqrt(30)
-        k2 = 18 + np.sqrt(30)
-        rho_q = np.array([k1, k2, k2, k1]) / 36
-    """
+    Function to do a nummerical 1D integral: line_int = False
+    or a lineintegral: line_int = True
+    Both using Gaussian quadrature
 
+    Parameters
+    ----------
+    a : float or list/tuple
+        lower bound or startpoint of line in the integration.
+    b : float or list/tuple
+        upper bound or endpoint of line in the integration.
+    Nq : int
+        How many points to use in the nummerical integration, Nq-point rule.
+    g : function pointer
+        pointer to function to integrate.
+    line_int : bool, optional
+        Do we have a lineitegral. The default is False.
+
+    Raises
+    ------
+    TypeError
+        If line_int=True and a or b are not in acepted form/type, meaning a and b are not list or tuple
+
+    Returns
+    -------
+    I : float
+        value of the integral.
+
+    """
+    # Weights and gaussian quadrature points for refrence
+    # if Nq == 1:
+    #     z_q = np.zeros(1)
+    #     rho_q = np.ones(1) * 2
+    # if Nq == 2:
+    #     c = np.sqrt(1 / 3)
+    #     z_q = np.array([-c, c])
+    #     rho_q = np.ones(2)
+    # if Nq == 3:
+    #     c = np.sqrt(3 / 5)
+    #     z_q = np.array([-c, 0, c])
+    #     rho_q = np.array([5, 8, 5]) / 9
+    # if Nq == 4:
+    #     c1 = np.sqrt((3 + 2 * np.sqrt(6 / 5)) / 7)
+    #     c2 = np.sqrt((3 - 2 * np.sqrt(6 / 5)) / 7)
+    #     z_q = np.array([-c1, -c2, c2, c1])
+    #     k1 = 18 - np.sqrt(30)
+    #     k2 = 18 + np.sqrt(30)
+    #     rho_q = np.array([k1, k2, k2, k1]) / 36
+    
+    # Weights and gaussian quadrature points, also works for Nq larger than 4
     z_q, rho_q = roots_legendre(Nq)
-    # check if we have a line integral
+    # check if we have a line integral, given by user
     if line_int:
         try:
+            # convert a and b to numpy arrays
             a = np.asarray(a)
             b = np.asarray(b)
             # parameterization of the line C between a and b,
@@ -45,25 +77,47 @@ def quadrature1D(a, b, Nq, g, line_int=False):
             abs_r_t = np.linalg.norm(b - a, ord=2) / 2
             # int_C g(x, y) ds = int_{-1}^1 g(r(t)) |r'(t)| dt = norm(b-a)/2  int_{-1}^1 g(r(t)) dt
             g2 = lambda t: g(x(t), y(t))
+            # compute the integral nummerically
             I = abs_r_t * np.sum(rho_q * g2(z_q))
         except TypeError:
+            # raise an error if a and b are not in acepted form/type.
             raise TypeError("a and b must be list or tuple for a line integral")
     else:
+        # compute the integral nummerically
         I = (b - a) / 2 * np.sum(rho_q * g(0.5 * (b - a) * z_q + 0.5 * (b + a)))
     return I
 
 
 def quadrature2D(p1, p2, p3, Nq, g):
+    """
+    Function to do a nummerical 2D integral using Gaussian quadrature on a triangle
+
+    Parameters
+    ----------
+    p1 : list/tuple
+        First vertex of the triangle.
+    p2 : list/tuple
+        Second vertex of the triangle.
+    p3 : list/tuple
+        Third vertex of the triangle.
+    Nq : int
+        How many points to use in the nummerical integration, Nq-point rule.
+    g : function pointer
+        pointer to function to integrate.
+
+    Raises
+    ------
+    ValueError
+        If Nq is not in {1, 3, 4}.
+
+    Returns
+    -------
+    I : float
+        Value of the integral.
+
+    """
     if Nq not in (1, 3, 4):
         raise ValueError("Nq is not 1, 3 or 4. Nq =" + "{.}".format(Nq))
-
-    """# convert p1, p2 and p3 to numpy array if they are not
-    if isinstance(p1, (list, tuple)):
-        p1 = np.array(p1)
-    if isinstance(p2, (list, tuple)):
-        p2 = np.array(p2)
-    if isinstance(p3, (list, tuple)):
-        p3 = np.array(p3)"""
 
     # Weights and gaussian quadrature points
     if Nq == 1:
@@ -90,6 +144,19 @@ def quadrature2D(p1, p2, p3, Nq, g):
 
 
 def test_quadrature1D(line_int=False):
+    """
+    Function to test the quadrature1D function and printing info to user.
+
+    Parameters
+    ----------
+    line_int : bool, optional
+        Do we have a lineitegral. The default is False.
+
+    Returns
+    -------
+    None.
+
+    """
     if not line_int:
         print("-" * 40)
         print("Testing 1D integral")
@@ -118,7 +185,15 @@ def test_quadrature1D(line_int=False):
         print("-" * 40)
 
 
-def test_quadrature2D(Itegrate_exact=False):
+def test_quadrature2D():
+    """
+    Function to test the quadrature2D function and printing info to user.
+
+    Returns
+    -------
+    None.
+
+    """
     # Testing:
     g = lambda x, y: np.log(x + y)
 
@@ -139,6 +214,14 @@ def test_quadrature2D(Itegrate_exact=False):
         print("-" * 40)
 
 def Gauss_quadrature_tester():
+    """
+    Function to run all the test in this script.
+
+    Returns
+    -------
+    None.
+
+    """
     test_quadrature1D()
     test_quadrature1D(line_int=True)
     test_quadrature2D()
