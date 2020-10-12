@@ -117,7 +117,7 @@ def Base_Poisson2D(N, p, tri, f, DoSingularityCheck=True):
     return A, F
 
 
-def Dirichlet_Poisson2D(N, f, epsilon=1e-6, DoSingularityCheck=True):
+def Dirichlet_Poisson2D(N, f, g_D, DoSingularityCheck=True):
     # solve Au = F using Dirichlet b.c.
     p, tri, edge = GetDisc(N)
     #   p		Nodal points, (x,y)-coordinates for point i given in row i.
@@ -129,13 +129,17 @@ def Dirichlet_Poisson2D(N, f, epsilon=1e-6, DoSingularityCheck=True):
 
     # Dirichlet boundary conditions
     for ek in edge:
-        A[np.ix_(ek, ek)] = 1 / epsilon
-        F[ek] = 0
+        # Zero out the ek'th rows in A
+        A[ek, :] = np.zeros(N)
+        # set A[k, k] = 1
+        A[ek, ek] = 1
+        # set F[ek] = g_D
+        F[ek] = g_D(*p[ek])
 
     return spsolve(A.tocsr(), F)
 
 
-def Mixed_Poisson2D(N, f, g, epsilon=1e-6, DoSingularityCheck=True):
+def Mixed_Poisson2D(N, f, g_N, g_D, DoSingularityCheck=True):
     # solve Au = F using Dirichlet b.c.
     p, tri, edge = GetDisc(N)
     #   p		Nodal points, (x,y)-coordinates for point i given in row i.
@@ -148,14 +152,18 @@ def Mixed_Poisson2D(N, f, g, epsilon=1e-6, DoSingularityCheck=True):
     neu, diri, both = Split_edge_nodes(p, edge)
     # Dirichlet boundary condition
     for ek in diri:
-        A[np.ix_(ek, ek)] = 1 / epsilon
-        F[ek] = 0
+        # Zero out the ek'th rows in A
+        A[ek, :] = np.zeros(N)
+        # set A[k, k] = 1
+        A[ek, ek] = 1
+        # set F[ek] = g_D
+        F[ek] = g_D(*p[ek])
 
     # Neumann boundary conditions
     for ek in neu:
-        p1 = p[ek[0]]
-        p2 = p[ek[1]]
-        F[ek] += lineintegral(p1, p2, 4, g)
+        # do the lineintegral
+        # *p[ek] = (p[ek, 0], p[ek, 1])
+        F[ek] += lineintegral(*p[ek], 4, g_N)
 
     for ek in both:
         # p1 = (x1, y1), p2=(x2, y2)
@@ -172,41 +180,54 @@ def Mixed_Poisson2D(N, f, g, epsilon=1e-6, DoSingularityCheck=True):
         # If y1 > 0
         if p1[1] > 0 and p2[1] < 0:
             # Neumann for p1
-            F[ek[0]] += lineintegral(p1, p3, 4, g)[0]
+            F[ek[0]] += lineintegral(p1, p3, 4, g_N)[0]
 
             # Dirichlet for p2
-            A[ek[1], ek[1]] = 1 / epsilon
-            F[ek[1]] = 0
+            # Zero out the ek[1]'th row in A
+            A[ek[1], :] = np.zeros(N)
+            # set A[k, k] = 1
+            A[ek[1], ek[1]] = 1
+            # set F[ek] = g_D
+            F[ek[1]] = g_D(*p[ek[1]])
+
         elif p1[1] < 0 and p2[1] > 0:
             # Dirichlet for p1
-            A[ek[0], ek[0]] = 1 / epsilon
-            F[ek[0]] = 0
+            # Zero out the ek[0]'th row in A
+            A[ek[0], :] = np.zeros(N)
+            # set A[k, k] = 1
+            A[ek[0], ek[0]] = 1
+            # set F[ek] = g_D
+            F[ek[0]] = g_D(*p[ek[1]])
             # Neumann for p2
-            F[ek[1]] += lineintegral(p3, p2, 4, g)[1]
+            F[ek[1]] += lineintegral(p3, p2, 4, g_N)[1]
         else:
             # This should not be a possible case, but if it happens, just use Dirichlet
-            A[np.ix_(ek, ek)] = 1 / epsilon
-            F[ek] = 0
+            # Zero out the ek'th row in A
+            A[ek, :] = np.zeros(N)
+            # set A[k, k] = 1
+            A[ek, ek] = 1
+            # set F[ek] = g_D
+            F[ek] = g_D(*p[ek])
 
     return spsolve(A.tocsr(), F)
 
 
-def Dirichlet2D(N, f, u_exact, epsilon=1e-6, DoSingularityCheck=True, save=False):
+def Dirichlet2D(N, f, u_exact, g_D, DoSingularityCheck=True, save=False):
     print("-" * 60)
     BC_type = 'Dirichlet'
     print(BC_type + " with N = " + str(N))
     # get numerical solution
-    U_dir = Dirichlet_Poisson2D(N, f, epsilon, DoSingularityCheck)
+    U_dir = Dirichlet_Poisson2D(N, f, g_D, DoSingularityCheck)
     # Create plot
     contourplot(N, U_dir, BC_type, u_exact, save=save)
 
 
-def Mixed2D(N, f, g, u_exact, epsilon=1e-6, DoSingularityCheck=True, save=False):
+def Mixed2D(N, f, g_N, u_exact, g_D, DoSingularityCheck=True, save=False):
     print("-" * 60)
     BC_type = "Mixed"
     print(BC_type + " with N = " + str(N))
     # get numerical solution
-    U_mix = Mixed_Poisson2D(N, f, g, epsilon, DoSingularityCheck)
+    U_mix = Mixed_Poisson2D(N, f, g_N, g_D, DoSingularityCheck)
     # Create plot
     contourplot(N, U_mix, BC_type, u_exact, save=save)
 
@@ -218,7 +239,9 @@ if __name__ == "__main__":
                           - 8 * np.pi * np.cos(2 * np.pi * (x * x + y * y))
     # Neumann B.C. function on x^2 + y^2 = r^2 = 1
     # 4 * np.pi  * np.sqrt(x * x + y * y) * np.cos(2 * np.pi * (x * x + y * y)) = 4 * np.pi on x^2 + y^2 = r^2 = 1
-    g = lambda x, y: 4 * np.pi
+    g_N = lambda x, y: 4 * np.pi
+    # Dirichlet B.C function
+    g_D = lambda x, y: np.zeros_like(x)
     # exact solution
     u_exact = lambda x, y:  np.sin(2 * np.pi * (x * x + y * y))
 
@@ -228,11 +251,12 @@ if __name__ == "__main__":
     DoSingularityCheck = True
     # chose the N
     N_list = [100, 500, 1000]
-
+    # Do the computations and plotting for all N in N_list
     for N in N_list:
-        Dirichlet2D(N, f, u_exact, epsilon=1e-6, DoSingularityCheck=DoSingularityCheck, save=save)
-        Mixed2D(N, f, g, u_exact, epsilon=1e-6, DoSingularityCheck=DoSingularityCheck, save=save)
-
+        # do Dirichlet BC
+        Dirichlet2D(N, f, u_exact, g_D, DoSingularityCheck=DoSingularityCheck, save=save)
+        # do Mixed BC
+        Mixed2D(N, f, g_N, u_exact, g_D, DoSingularityCheck=DoSingularityCheck, save=save)
 
 
 
