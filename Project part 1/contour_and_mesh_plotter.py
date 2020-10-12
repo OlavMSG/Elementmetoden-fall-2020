@@ -3,8 +3,7 @@
 Created on 07.10.2020
 
 @author: Olav Gran
-in collaboration with Ruben Mustad
-(based in old code by Ruben)
+based in old code by Ruben Mustad
 """
 import numpy as np
 from matplotlib import cm
