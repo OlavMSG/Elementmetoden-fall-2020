@@ -87,6 +87,50 @@ def quadrature1D(a, b, Nq, g, line_int=False):
     return I
 
 
+def lineintegral(a, b, Nq, g):
+    """
+    Function to handle the lineintegral with local basis functions implemented
+
+    Parameters
+    ----------
+    a : list/tuple
+        startpoint of line in the integration.
+    b : list/tuple
+        endpoint of line in the integration.
+    Nq : int
+        How many points to use in the numerical integration, Nq-point rule.
+    g : function pointer
+        pointer to function to integrate.
+
+    Returns
+    -------
+    I1 : float
+        Value of integral with the first basis function.
+    I2 : TYPE
+        Value of integral with the second basis function.
+
+    """
+    # Weights and gaussian quadrature points
+    z_q, rho_q = roots_legendre(Nq)
+    a = np.asarray(a)
+    b = np.asarray(b)
+    # parameterization of the line C between a and b,
+    # r(t) = (1-t)a/2 + (1+t)b/2,
+    x = lambda t: ((1 - t) * a[0] + (1 + t) * b[0]) / 2
+    y = lambda t: ((1 - t) * a[1] + (1 + t) * b[1]) / 2
+    # r'(t) = -a/2+ b/2 = (b-a)/2, |r'(t)| = norm(b-a)
+    abs_r_t = np.linalg.norm(b - a, ord=2) / 2
+    # g times local basis
+    g1 = lambda t: g(x(t), y(t)) * (1 + t) / 2  # for a
+    g2 = lambda t: g(x(t), y(t)) * (1 - t) / 2  # for b
+    # int_C g(x, y) * phi(x, y) ds = int_{-1}^1 g(r(t)) * phi(r(t)) |r'(t)| * 2 dt
+    # = norm(b-a)  int_{-1}^1 g(r(t)) * phi(r(t)) dt
+    # compute the integrals nummerically
+    I1 = abs_r_t * np.sum(rho_q * g1(z_q))  # load for a
+    I2 = abs_r_t * np.sum(rho_q * g2(z_q))  # load for b
+    return I1, I2
+
+
 def quadrature2D(p1, p2, p3, Nq, g):
     """
     Function to do a numerical 2D integral using Gaussian quadrature on a triangle
