@@ -249,6 +249,7 @@ def Mixed_Poisson2D(N, f, g_N, g_D, DoSingularityCheck=True):
         # p1 = (x1, y1), p2=(x2, y2)
         p1 = p[ek[0]]
         p2 = p[ek[1]]
+        # print(p1, p2) # to see where the points are
         # Here either y1 > 0 and y2 < 0, or y1 < 0 and y2 > 0
         # Parameterize the line as r(t)= (x(t), y(t)) = (1 - t ) * p1 - t * p2, t in [0, 1]
         # Let t0 be solution to 0 = y(t) = (1 - t) * y1 + t * y2
