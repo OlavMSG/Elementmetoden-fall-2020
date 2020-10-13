@@ -1,5 +1,5 @@
 Our project part 1 consists of the following files
-TMA4220___Project_1.pdf    : The repport.
+TMA4220_Project_1_studentnummers_480858_and_487802.pdf    : The repport.
 readme.txt                 : What you are reading now.
 getdisc.py                 : Mesh code from https://wiki.math.ntnu.no/tma4220/2020h/project given to us.
 Gauss_quadrature.py        : Script for doing 1D, 1D lineintegral and 2D integrals using Gaussian quadrature.
