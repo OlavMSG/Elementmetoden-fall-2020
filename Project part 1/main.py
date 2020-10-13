@@ -3,7 +3,7 @@
 Created on 10.10.2020
 
 @author: Olav Gran
-based in old code by Ruben Mustad
+based on old code by Ruben Mustad
 """
 
 import numpy as np
