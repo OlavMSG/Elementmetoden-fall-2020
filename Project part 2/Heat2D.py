@@ -8,7 +8,6 @@ Created on 09.11.2020
 import numpy as np
 import scipy.sparse as sparse
 from scipy.sparse.linalg import spsolve
-from scipy.special import roots_legendre
 from getdisc import GetDisc
 from Gauss_quadrature import quadrature2D
 
@@ -21,7 +20,7 @@ def get_in_and_edge_index(tri, edge):
     return in_index, edge_index
 
 
-def build_Mk_Ak_F0_local(p1, p2, p3, f, alpha, in_point, len_argk):
+def build_Mk_Ak_F0_local(p1, p2, p3, f, alpha, beta, in_point, len_argk):
     # calculate basis functions, gradient of jacobian etc.
     # row_k: [1, x_k, y_k]
     Bk = np.array([[1, p1[0], p1[1]], [1, p2[0], p2[1]], [1, p3[0], p3[1]]])
@@ -34,7 +33,7 @@ def build_Mk_Ak_F0_local(p1, p2, p3, f, alpha, in_point, len_argk):
     # Calculate the local stifness matrix Ak
     # Ak_{a,b} = Area_k * (Cxk_a * Cx_b + Cyk_a * Cyk_b)
     Area_k_func = lambda x, y: 1
-    Area_k = quadrature2D(p1, p2, p3, 4, Area_k_func)
+    Area_k = quadrature2D(p1, p2, p3, 1, Area_k_func)  # 1-point rule is sufficient here
     # Ck[1:3, :].T = [[Cxk_1, Cyk_1], [Cxk_2, Cy_2], [Cxk_3, Cyk_3]]
     # Ck[1:3, :] = [[Cxk_1, Cxk_2, Cxk_3], [Cyk_1, Cyk_2, Cyk_3]]
     # (Ck[1:3, :].T @ Ck[1:3, :])_{a, b} = Cxk_a * Cxk_b + Cyk_a * Cyk_b, (a,b) in {1, 2, 3}
@@ -46,7 +45,7 @@ def build_Mk_Ak_F0_local(p1, p2, p3, f, alpha, in_point, len_argk):
     k = 0
     for i in range(3):
         if in_point[i] != -1:
-            f_phi_i = lambda x, y: f(x, y, t=0) * phi(x, y)[i]
+            f_phi_i = lambda x, y: f(x, y, 0, beta) * phi(x, y)[i]
             F0_local[k] = quadrature2D(p1, p2, p3, 4, f_phi_i)
             k += 1
         for j in range(3):
@@ -56,7 +55,7 @@ def build_Mk_Ak_F0_local(p1, p2, p3, f, alpha, in_point, len_argk):
     return Ak, Mk, F0_local
 
 
-def base_Heat2D(N, p, tri, N_in, in_index, edge_index, f, alpha):
+def base_Heat2D(N, p, tri, N_in, in_index, edge_index, f, alpha, beta):
     # Full-Stiffness matrix
     Abar = sparse.lil_matrix((N, N))
     # Full-Mass matrix
@@ -80,7 +79,7 @@ def base_Heat2D(N, p, tri, N_in, in_index, edge_index, f, alpha):
         argk = np.nonzero(in_point != -1)[0]
         # Add the Ak and MK to the global stiffness matrix A and global mass matrix M
         indexk = np.ix_(nk, nk)
-        Ak, Mk, F0_local = build_Mk_Ak_F0_local(p1, p2, p3, f, alpha, in_point, len(argk))
+        Ak, Mk, F0_local = build_Mk_Ak_F0_local(p1, p2, p3, f, alpha, beta, in_point, len(argk))
         Abar[indexk] += Ak
         Mbar[indexk] += Mk
         # Add the local load vector Fk to the global load vector F
@@ -100,7 +99,7 @@ def base_Heat2D(N, p, tri, N_in, in_index, edge_index, f, alpha):
     return A, M, F0, Ba, Bm
 
 
-def build_Ft(N_in, p, tri, edge_index, f, t):
+def build_Ft(N_in, p, tri, edge_index, f, beta, t):
     # load vector
     Ft = np.zeros(N_in)
 
@@ -131,7 +130,7 @@ def build_Ft(N_in, p, tri, edge_index, f, t):
         k = 0
         for i in range(3):
             if in_point[i] != -1:
-                f_phi_i = lambda x, y: f(x, y, t) * phi(x, y)[i]
+                f_phi_i = lambda x, y: f(x, y, t, beta) * phi(x, y)[i]
                 Ft_local[k] = quadrature2D(p1, p2, p3, 4, f_phi_i)
                 k += 1
 
@@ -140,10 +139,14 @@ def build_Ft(N_in, p, tri, edge_index, f, t):
 
     return Ft
 
+def get_u_h(N, u_h1, Rg, in_index, edge_index):
+    u_h = np.zeros(N)
+    u_h[in_index] = u_h1
+    u_h[edge_index] = Rg
+    return u_h
 
 
-
-def ThetaMethod_Heat2D(N, Nt, alpha, f, uD, duDdt, u0, theta=0.5, T=2*np.pi, savelist=[0.5]):
+def ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=1, Rg_indep_t=True, f_indep_t=False):
     p, tri, edge = GetDisc(N)
     #   p		Nodal points, (x,y)-coordinates for point i given in row i.
     #   tri   	Elements. Index to the three corners of element i given in row i.
@@ -167,7 +170,7 @@ def ThetaMethod_Heat2D(N, Nt, alpha, f, uD, duDdt, u0, theta=0.5, T=2*np.pi, sav
     kthetabar2 = k * (1 - theta) / 2
 
     # get the base Stiffness Matrix, Mass matrix, F(t=0), contribution Matrices to F.
-    A, M, F0, Ba, Bm = base_Heat2D(N, p, tri, N_in, in_index, edge_index, f, alpha)
+    A, M, F0, Ba, Bm = base_Heat2D(N, p, tri, N_in, in_index, edge_index, f, alpha, beta)
 
     # initial setup
     # u_h1(t=0), (homogenous Dirichlet)
@@ -179,14 +182,10 @@ def ThetaMethod_Heat2D(N, Nt, alpha, f, uD, duDdt, u0, theta=0.5, T=2*np.pi, sav
     # The t=0 load vector with BC contributions
     F_current = F0 - Bm @ dRgdt_current - Ba @ Rg_current
 
-    # the time-pictures to save
-    # add 0 and 1 to list and take the unique list
-    savelist = np.unique(np.array([0, *savelist, 1]).flatten())
-    savetime = T * savelist
     u_hdict = dict()
 
     # save time-picture
-    u_hdict[0] = [u_h1_current, Rg_current]
+    u_hdict[0] = [get_u_h(N, u_h1_current, Rg_current, in_index, edge_index), 0]
     savecount = 1
 
     # do iterations of theta-method
@@ -196,18 +195,32 @@ def ThetaMethod_Heat2D(N, Nt, alpha, f, uD, duDdt, u0, theta=0.5, T=2*np.pi, sav
         # the left-hand side matrix
         lhs = (M + ktheta2 * theta * A).tocsr()
         # The lifting function and its t derivative at t=tk
-        Rg_next = uD(xvec_edge, yvec_edge, t=tk)
-        dRgdt_next = duDdt(xvec_edge, yvec_edge, t=tk)
+        if Rg_indep_t:
+            # independent of t
+            # next == current
+            Rg_next = Rg_current
+            dRgdt_next = dRgdt_current
+        else:
+            # dependent on t
+            Rg_next = uD(xvec_edge, yvec_edge, t=tk)
+            dRgdt_next = duDdt(xvec_edge, yvec_edge, t=tk)
         # the next load vector
-        F_next = build_Ft(N_in, p, tri, edge_index, f, t=tk) - Bm @ dRgdt_next - Ba @ Rg_next
+        if f_indep_t:
+            # independent of t
+            # next == current
+            F_next = F_current
+        else:
+            # dependent on t
+            F_next = build_Ft(N_in, p, tri, edge_index, f, beta, t=tk) - Bm @ dRgdt_next - Ba @ Rg_next
+
         # the right-hand side vector
         rhs = (M + kthetabar2 * A) @ u_h1_current + ktheta2 * F_next + kthetabar2 * F_current
         # solve(lhs, rhs)
         u_h1_next = spsolve(lhs, rhs)
 
         # save time-picture
-        if tk in savetime:
-            u_hdict[savecount] = [u_h1_next, Rg_current]
+        if tk in (0, T) or j == int(Nt/2):
+            u_hdict[savecount] = [get_u_h(N, u_h1_next, Rg_next, in_index, edge_index), tk]
             savecount += 1
 
         # update
@@ -215,25 +228,25 @@ def ThetaMethod_Heat2D(N, Nt, alpha, f, uD, duDdt, u0, theta=0.5, T=2*np.pi, sav
         Rg_current = Rg_next
         F_current = F_next
 
-    return u_hdict, savelist
+    return u_hdict
 
 
 
 
-f = lambda x, y, t: x + y + t
+f = lambda x, y, t, beta: np.exp(- beta * (x*x + y*y))
 
-uD = lambda x, y, t: np.zeros_like(x) - t
+uD = lambda x, y, t: np.zeros_like(x)
 
-duDdt = lambda x, y, t: -1 * np.ones_like(x)
+duDdt = lambda x, y, t: np.zeros_like(x)
 
 u0 = lambda x, y: np.zeros_like(x)
 
 N = 15
 Nt = 10
 alpha = 1
-u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, f, uD, duDdt, u0, theta=0.5)
+beta = 1
+u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5)
 
-print(u_hdict)
 
 
 
