@@ -167,7 +167,7 @@ def meshplot_v2(N_list, nCols=4, save=False):
 
 
 if __name__ == "__main__":
-    """f = lambda x, y, t, beta: np.exp(- beta * (x*x + y*y))
+    f = lambda x, y, t, beta: np.exp(- beta * (x*x + y*y))
 
     uD = lambda x, y, t: np.zeros_like(x)
     
@@ -178,10 +178,10 @@ if __name__ == "__main__":
     N = 500
     Nt = 250
     alpha = 9.62e-5
-    beta = 1
-    u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=10, f_indep_t=True)
+    beta = 10
+    u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=1, f_indep_t=True)
     
-    contourplot_Heat2D(N ,u_hdict)"""
+    contourplot_Heat2D(N ,u_hdict)
     # save the plot as pdf?
     save = False
     # list of N to plot for

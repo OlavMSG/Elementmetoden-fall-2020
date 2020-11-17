@@ -165,9 +165,9 @@ def ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=1, Rg_
 
     # the time-step
     k = T / Nt
-    ktheta2 = k * theta / 2
+    ktheta = k * theta
     # thetabar
-    kthetabar2 = k * (1 - theta) / 2
+    kthetabar = k * (1 - theta)
 
     # get the base Stiffness Matrix, Mass matrix, F(t=0), contribution Matrices to F.
     A, M, F0, Ba, Bm = base_Heat2D(N, p, tri, N_in, in_index, edge_index, f, alpha, beta)
@@ -193,7 +193,7 @@ def ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=1, Rg_
         # the time
         tk = j * k
         # the left-hand side matrix
-        lhs = (M + ktheta2 * theta * A).tocsr()
+        lhs = (M + ktheta * A).tocsr()
         # The lifting function and its t derivative at t=tk
         if Rg_indep_t:
             # independent of t
@@ -214,7 +214,7 @@ def ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=1, Rg_
             F_next = build_Ft(N_in, p, tri, edge_index, f, beta, t=tk) - Bm @ dRgdt_next - Ba @ Rg_next
 
         # the right-hand side vector
-        rhs = (M + kthetabar2 * A) @ u_h1_current + ktheta2 * F_next + kthetabar2 * F_current
+        rhs = (M + kthetabar * A) @ u_h1_current + ktheta * F_next + kthetabar * F_current
         # solve(lhs, rhs)
         u_h1_next = spsolve(lhs, rhs)
 
