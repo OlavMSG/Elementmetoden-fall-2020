@@ -23,7 +23,7 @@ newparams = {'axes.titlesize': fontsize, 'axes.labelsize': fontsize,
 plt.rcParams.update(newparams)
 
 
-def contourplot_Heat2D(N, u_hdict, save=False):
+def contourplot_Heat2D(N, u_hdict, save_name, save=False):
     """
     Function to make contourplots of the three first entry's in u_hdict
 
@@ -89,8 +89,7 @@ def contourplot_Heat2D(N, u_hdict, save=False):
 
     # save the plot?
     if save:
-        save_name = "plot\Heat_N=" + str(N)
-        plt.savefig(save_name + ".pdf")
+        plt.savefig("plot/" + save_name + ".pdf")
     plt.show()
 
 
@@ -142,7 +141,6 @@ def meshplot_v2(N_list, nCols=4, save=False):
     for i in range(nRows):
         for j in range(nCols):
             N = N_list[i, j]
-            print(N)
             if N == -1:
                 # don't show plot
                 axs[i, j].set_axis_off()
@@ -162,33 +160,58 @@ def meshplot_v2(N_list, nCols=4, save=False):
 
     # save the plot?
     if save:
-        plt.savefig("plot\Mesh_for_N.pdf")
+        plt.savefig("plot\Mesh_for_Ns.pdf")
     plt.show()
 
 
-def plotError(N_list, error_dict, time_stamps):
+def plotError(N_list, error_dict, time_stamps, save=False):
 
-    h_vec = np.round(h_finder(N_list, ifprint=False), 5)
+    h_vec = h_finder(N_list, ifprint=False)
     plt.figure("error", figsize=(14, 7))
     for key in error_dict:  # key is a int
         error = error_dict[key]
         t = np.round(time_stamps[key], 2)
-        print(h_vec)
-        print(error)
-        plt.loglog(h_vec[1:], error[1:], 'o-',label="$\eta(t=" + str(t) + ")$")
-
+        plt.loglog(h_vec, error, 'o-', label="$rel.error(t=" + str(t) + ")$")
+        p = np.polyfit(np.log(h_vec[1:]), np.log(error[1:]), deg=1)
+        print(p)
+        # err2 = np.exp(p[0] * np.log(h_vec) + p[1])
+        # plt.loglog(h_vec, err2)
     plt.xlabel("Element size, $h$")
     plt.ylabel("log relative error")
 
     plt.grid()
     plt.title("Element size v. relative error")
     plt.legend(loc=9, bbox_to_anchor=(0.5, -0.11), ncol=3)
+    if save:
+        plt.savefig("plot/Relative_error.pdf")
     plt.show()
 
+def plottime(N_list, time_vec1, time_vec2, save=False):
+    h_vec = h_finder(N_list, ifprint=False)
+    plt.figure("time", figsize=(14, 7))
+    plt.plot(h_vec, time_vec2, 'o-', label="Time to find error estimate")
+    plt.plot(h_vec, time_vec1, 'o-', label="Time to solve problem")
+
+    plt.xlabel("Element size, $h$")
+    plt.ylabel("Time, $t$")
+
+    plt.grid()
+    plt.title("Element size v. Time")
+    plt.legend(loc=9, bbox_to_anchor=(0.5, -0.11), ncol=3)
+    if save:
+        plt.savefig("plot/Time.pdf")
+    plt.show()
+
+def Dirc_eps(xvec, yvec, eps=0.125):
+    out_vec = np.zeros_like(xvec)
+    for i in range(len(xvec)):
+        if xvec[i]**2 + yvec[i]**2 <= eps:
+            out_vec[i] = 1
+    return out_vec
 
 
 if __name__ == "__main__":
-    f = lambda x, y, t, beta: np.exp(- beta * (x*x + y*y))
+    f = lambda x, y, t, beta=5: np.exp(- beta * (x*x + y*y))
 
     uD = lambda x, y, t: np.zeros_like(x)
     
@@ -196,18 +219,69 @@ if __name__ == "__main__":
     
     u0 = lambda x, y: np.zeros_like(x)
     
-    N = 78
-    Nt = 200
+    N = 500
+    Nt = 100
     alpha = 9.62e-5
-    beta = 2
-    u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=1, f_indep_t=True)
-    
-    contourplot_Heat2D(N, u_hdict)
+    beta = 5
     # save the plot as pdf?
     save = False
+
+    save_name = "FE000"
+    u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0, T=1, f_indep_t=True)
+    contourplot_Heat2D(N, u_hdict, save_name, save=save)
+    save_name = "ITrap000"
+    u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=1, f_indep_t=True)
+    contourplot_Heat2D(N, u_hdict, save_name, save=save)
+    save_name = "BE000"
+    u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=1, T=1, f_indep_t=True)
+    contourplot_Heat2D(N, u_hdict, save_name, save=save)
+
+    f = lambda x, y, t, beta=5: np.exp(- beta * (x * x + y * y))
+
+    uD = lambda x, y, t: np.zeros_like(x)
+
+    duDdt = lambda x, y, t: np.zeros_like(x)
+
+    u0 = lambda x, y: Dirc_eps(x, y)
+    save_name = "ITrap00Dirc"
+    u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=1, f_indep_t=True)
+    contourplot_Heat2D(N, u_hdict, save_name, save=save)
+
+    f = lambda x, y, t, beta=5: np.exp(- beta * (x * x + y * y))
+
+    uD = lambda x, y, t: y / 2 + 1/ 2
+
+    duDdt = lambda x, y, t: np.zeros_like(x)
+
+    u0 = lambda x, y: y / 2 + 1/ 2
+    save_name = "ITrap00y"
+    u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=1, f_indep_t=True)
+    contourplot_Heat2D(N, u_hdict, save_name, save=save)
+
+    f = lambda x, y, t, beta, a=1: np.exp(- beta * ((x - a * np.sin(t)) ** 2 + y * y))
+
+    uD = lambda x, y, t: np.zeros_like(x)
+
+    duDdt = lambda x, y, t: np.zeros_like(x)
+
+    u0 = lambda x, y: np.zeros_like(x)
+    save_name = "ITrap000a1"
+    u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=2*np.pi, f_indep_t=False)
+    contourplot_Heat2D(N, u_hdict, save_name, save=save)
+
+    f = lambda x, y, t, beta, a=5: np.exp(- beta * ((x - a * np.sin(t)) ** 2 + y * y))
+
+    uD = lambda x, y, t: np.zeros_like(x)
+
+    duDdt = lambda x, y, t: np.zeros_like(x)
+
+    u0 = lambda x, y: np.zeros_like(x)
+    save_name = "ITrap000a5"
+    u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=2*np.pi, f_indep_t=False)
+    contourplot_Heat2D(N, u_hdict, save_name, save=save)
+
     # list of N to plot for
-    N_list = [7, 27, 78, 270]
-    print(N_list)
+    N_list = [11, 34, 129, 484, 500]  # [12, 24, 34, 66, 129, 270, 484, 6900]
     # make a meshplot
     meshplot_v2(N_list, save=save)
 

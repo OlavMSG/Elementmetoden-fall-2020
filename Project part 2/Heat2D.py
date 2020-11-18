@@ -161,7 +161,7 @@ def ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=1, Rg_
     yvec_edge = p[edge_index][:, 1]
     # x and y on the interior
     xvec_in = p[in_index][:, 0]
-    yvec_in = p[in_index][:, 0]
+    yvec_in = p[in_index][:, 1]
 
     # the time-step
     k = T / Nt
@@ -230,22 +230,22 @@ def ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=1, Rg_
 
     return u_hdict
 
+if __name__ == "__main__":
 
 
+    f = lambda x, y, t, beta: np.exp(- beta * (x*x + y*y))
 
-f = lambda x, y, t, beta: np.exp(- beta * (x*x + y*y))
+    uD = lambda x, y, t: np.zeros_like(x)
 
-uD = lambda x, y, t: np.zeros_like(x)
+    duDdt = lambda x, y, t: np.zeros_like(x)
 
-duDdt = lambda x, y, t: np.zeros_like(x)
+    u0 = lambda x, y: np.zeros_like(x)
 
-u0 = lambda x, y: np.zeros_like(x)
-
-N = 15
-Nt = 10
-alpha = 1
-beta = 1
-u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5)
+    N = 500
+    Nt = 10
+    alpha = 1
+    beta = 1
+    u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5)
 
 
 

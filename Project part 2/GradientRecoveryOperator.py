@@ -9,7 +9,7 @@ from timeit import default_timer as timer
 from getdisc import GetDisc
 from Gauss_quadrature import quadrature2D
 from Heat2D import ThetaMethod_Heat2D
-from plotingfunctions import plotError
+from plotingfunctions import plotError, plottime
 
 
 def get_nodal_patch(node, tri):
@@ -163,7 +163,7 @@ def Error_Estimate_G(N, u_hdict):
 
 def get_error_estimate(f, uD, duDdt, u0, N_list=None, Nt=100, beta=5, alpha=9.62e-5, theta=0.5, T=1, Rg_indep_t=True, f_indep_t=True):
     if N_list is None:
-        N_list = [7, 27, 78, 274, 4071]
+        N_list = [12, 34, 129, 484, 6900]
         # these values give h=1/2^i for i=0,1,2,3 and 5, see findh.py
 
     m = len(N_list)
@@ -208,11 +208,14 @@ if __name__ == "__main__":
 
     u0 = lambda x, y: np.zeros_like(x)
 
-    N_list, error_dict, time_vec1, time_vec2, time_stamps = get_error_estimate(f, uD, duDdt, u0, N_list=[7, 27, 78, 270, 1000])
-
-    plotError(N_list, error_dict, time_stamps)
+    # save the plot as pdf?
+    save = False
+    # [12, 24, 34, 66, 129, 270, 484, 6900]
+    # [12, 24, 34, 66, 129, 270, 484]
+    # [12, 34, 129, 484]
+    N_list, error_dict, time_vec1, time_vec2, time_stamps = get_error_estimate(f, uD, duDdt, u0, N_list=[12, 24, 34, 66, 129, 270, 484])
 
     print(error_dict)
-    print(time_vec1)
-    print(time_vec2)
+    plotError(N_list, error_dict, time_stamps, save=save)
 
+    plottime(N_list, time_vec1, time_vec2, save=save)
