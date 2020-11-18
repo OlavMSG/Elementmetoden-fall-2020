@@ -5,10 +5,10 @@ Created on 16.11.2020
 @author: Olav Milian
 """
 import numpy as np
-from matplotlib import cm
 import matplotlib.pyplot as plt
 from getdisc import GetDisc
 from Heat2D import ThetaMethod_Heat2D
+from findh import h_finder
 
 
 import sympy as sym
@@ -166,6 +166,27 @@ def meshplot_v2(N_list, nCols=4, save=False):
     plt.show()
 
 
+def plotError(N_list, error_dict, time_stamps):
+
+    h_vec = np.round(h_finder(N_list, ifprint=False), 5)
+    plt.figure("error", figsize=(14, 7))
+    for key in error_dict:  # key is a int
+        error = error_dict[key]
+        t = np.round(time_stamps[key], 2)
+        print(h_vec)
+        print(error)
+        plt.loglog(h_vec[1:], error[1:], 'o-',label="$\eta(t=" + str(t) + ")$")
+
+    plt.xlabel("Element size, $h$")
+    plt.ylabel("log relative error")
+
+    plt.grid()
+    plt.title("Element size v. relative error")
+    plt.legend(loc=9, bbox_to_anchor=(0.5, -0.11), ncol=3)
+    plt.show()
+
+
+
 if __name__ == "__main__":
     f = lambda x, y, t, beta: np.exp(- beta * (x*x + y*y))
 
@@ -175,17 +196,17 @@ if __name__ == "__main__":
     
     u0 = lambda x, y: np.zeros_like(x)
     
-    N = 500
-    Nt = 250
+    N = 78
+    Nt = 200
     alpha = 9.62e-5
-    beta = 10
+    beta = 2
     u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=1, f_indep_t=True)
     
-    contourplot_Heat2D(N ,u_hdict)
+    contourplot_Heat2D(N, u_hdict)
     # save the plot as pdf?
     save = False
     # list of N to plot for
-    N_list = [7, 23, 78, 274]
+    N_list = [7, 27, 78, 270]
     print(N_list)
     # make a meshplot
     meshplot_v2(N_list, save=save)

@@ -21,7 +21,7 @@ def get_in_and_edge_index(tri, edge):
 
 
 def build_Mk_Ak_F0_local(p1, p2, p3, f, alpha, beta, in_point, len_argk):
-    # calculate basis functions, gradient of jacobian etc.
+    # calculate basis functions,.
     # row_k: [1, x_k, y_k]
     Bk = np.array([[1, p1[0], p1[1]], [1, p2[0], p2[1]], [1, p3[0], p3[1]]])
     Ck = np.linalg.inv(Bk)  # here faster than solving Mk @ Ck = I_3
@@ -117,7 +117,7 @@ def build_Ft(N_in, p, tri, edge_index, f, beta, t):
                 in_point[i] = -1
         # index for nk in interior
         argk = np.nonzero(in_point != -1)[0]
-        # calculate basis functions, gradient of jacobian etc.
+        # calculate basis functions.
         # row_k: [1, x_k, y_k]
         Bk = np.array([[1, p1[0], p1[1]], [1, p2[0], p2[1]], [1, p3[0], p3[1]]])
         Ck = np.linalg.inv(Bk)  # here faster than solving Mk @ Ck = I_3
@@ -146,7 +146,7 @@ def get_u_h(N, u_h1, Rg, in_index, edge_index):
     return u_h
 
 
-def ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=1, Rg_indep_t=True, f_indep_t=False):
+def ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=1, Rg_indep_t=True, f_indep_t=True):
     p, tri, edge = GetDisc(N)
     #   p		Nodal points, (x,y)-coordinates for point i given in row i.
     #   tri   	Elements. Index to the three corners of element i given in row i.
@@ -185,8 +185,8 @@ def ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=1, Rg_
     u_hdict = dict()
 
     # save time-picture
-    u_hdict[0] = [get_u_h(N, u_h1_current, Rg_current, in_index, edge_index), 0]
-    savecount = 1
+    # u_hdict[0] = [get_u_h(N, u_h1_current, Rg_current, in_index, edge_index), 0]
+    savecount = 0
 
     # do iterations of theta-method
     for j in range(1, Nt+1):
@@ -214,12 +214,12 @@ def ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=1, Rg_
             F_next = build_Ft(N_in, p, tri, edge_index, f, beta, t=tk) - Bm @ dRgdt_next - Ba @ Rg_next
 
         # the right-hand side vector
-        rhs = (M + kthetabar * A) @ u_h1_current + ktheta * F_next + kthetabar * F_current
+        rhs = (M - kthetabar * A) @ u_h1_current + ktheta * F_next + kthetabar * F_current
         # solve(lhs, rhs)
         u_h1_next = spsolve(lhs, rhs)
 
         # save time-picture
-        if tk in (0, T) or j == int(Nt/2):
+        if j in (Nt, int(Nt/3), int(2 * Nt / 3)):
             u_hdict[savecount] = [get_u_h(N, u_h1_next, Rg_next, in_index, edge_index), tk]
             savecount += 1
 
