@@ -167,9 +167,9 @@ def Error_Estimate_G(N, u_hdict):
     return eta2_vec
 
 
-def get_error_estimate(f, uD, duDdt, u0, N_list=None, Nt=100, beta=5, alpha=9.62e-5, theta=0.5, T=1, Rg_indep_t=True, f_indep_t=True):
+def get_error_estimate_G(f, uD, duDdt, u0, N_list=None, Nt=100, beta=5, alpha=9.62e-5, theta=0.5, T=1, Rg_indep_t=True, f_indep_t=True):
     if N_list is None:
-        N_list = [1, 2, 4, 8, 32]
+        N_list = [2, 4, 6,  8, 32]
         # these values give h=1/2^i for i=0,1,2,3 and 5, see findh.py
 
     m = len(N_list)
@@ -197,8 +197,6 @@ def get_error_estimate(f, uD, duDdt, u0, N_list=None, Nt=100, beta=5, alpha=9.62
             time_stamps = np.array([u_hdict[0][1], u_hdict[1][1], u_hdict[2][1]])
 
     for i in range(3):
-        # the relative error
-        # note eta_i / eta_5 = eta_i^2 / eta_5^2, so we can work with eta^2
         error_dict[i] = np.sqrt(error_dict[i])
 
 
@@ -216,9 +214,9 @@ if __name__ == "__main__":
 
     # save the plot as pdf?
     save = False
-    N_list, error_dict, time_vec1, time_vec2, time_stamps = get_error_estimate(f, uD, duDdt, u0, N_list=[1, 2, 4, 8])
+    N_list, error_dict, time_vec1, time_vec2, time_stamps = get_error_estimate_G(f, uD, duDdt, u0, N_list=[2, 4, 6, 8])
 
     print(error_dict)
-    plotError(N_list, error_dict, time_stamps, save=save)
+    plotError(N_list, error_dict, time_stamps, "GRO", "recovered gradient", save=save)
 
-    plottime(N_list, time_vec1, time_vec2, save=save)
+    plottime(N_list, "GRO", time_vec1, time_vec2, save=save)

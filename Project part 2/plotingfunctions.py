@@ -161,42 +161,42 @@ def meshplot_v2(N_list, nCols=4, save=False):
     plt.show()
 
 
-def plotError(N_list, error_dict, time_stamps, save=False):
-
+def plotError(N_list, error_dict, time_stamps, save_name, label_txt, save=False):
     h_vec = np.array([1 / N for N in N_list])
     plt.figure("error", figsize=(14, 7))
     for key in error_dict:  # key is a int
         error = error_dict[key]
         t = np.round(time_stamps[key], 2)
-        plt.loglog(h_vec, error, 'o-', label="$rel.error(t=" + str(t) + ")$")
+        plt.loglog(h_vec, error, 'o-', label=label_txt+"$(t=" + str(t) + ")$", basex=2)
         p = np.polyfit(np.log(h_vec[1:]), np.log(error[1:]), deg=1)
         print(p)
         # err2 = np.exp(p[0] * np.log(h_vec) + p[1])
         # plt.loglog(h_vec, err2)
     plt.xlabel("Element size, $h$")
-    plt.ylabel("log relative error")
-
+    plt.ylabel("log " + label_txt)
+    plt.gca().invert_xaxis()
     plt.grid()
-    plt.title("Element size v. relative error")
+    plt.title("Error Estimate using " + label_txt)
     plt.legend(loc=9, bbox_to_anchor=(0.5, -0.11), ncol=3)
     if save:
-        plt.savefig("plot/Relative_error.pdf")
+        plt.savefig("plot/" + save_name +".pdf")
     plt.show()
 
-def plottime(N_list, time_vec1, time_vec2, save=False):
+
+def plottime(N_list, save_name, time_vec1, time_vec2=None, save=False):
     h_vec = np.array([1 / N for N in N_list])
     plt.figure("time", figsize=(14, 7))
-    plt.plot(h_vec, time_vec2, 'o-', label="Time to find error estimate")
-    plt.plot(h_vec, time_vec1, 'o-', label="Time to solve problem")
-
+    if time_vec2 is not None:
+        plt.plot(h_vec, time_vec2, 'o-', label="Time to find error estimate")
+    plt.plot(h_vec, time_vec1, 'o-', label="Time to solve the problem")
     plt.xlabel("Element size, $h$")
     plt.ylabel("Time, $t$")
-
+    plt.gca().invert_xaxis()
     plt.grid()
     plt.title("Element size v. Time")
     plt.legend(loc=9, bbox_to_anchor=(0.5, -0.11), ncol=3)
     if save:
-        plt.savefig("plot/Time.pdf")
+        plt.savefig("plot/Time" + save_name + ".pdf")
     plt.show()
 
 

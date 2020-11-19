@@ -20,43 +20,43 @@ import scipy.spatial as spsa
 
 def getPlate(N):
     # Defining auxiliary variables.
-    L = np.linspace(-1,1,N)
-    Y,X = np.meshgrid(L,L)
+    L = np.linspace(-1, 1, N)
+    Y, X = np.meshgrid(L, L)
     x = np.ravel(np.transpose(X))
     y = np.ravel(np.transpose(Y))
 
     # Generating nodal points.
-    p = np.zeros((N**2,2))
-    for i in range(0,N**2):
-        p[i,0] = x[i]
-        p[i,1] = y[i]
+    p = np.zeros((N ** 2, 2))
+    for i in range(0, N ** 2):
+        p[i, 0] = x[i]
+        p[i, 1] = y[i]
 
     # Generating elements.
     mesh = spsa.Delaunay(p)
     tri = mesh.simplices
 
     # Generating nodal points on outer edge.
-    south = np.array([np.arange(1,N),np.arange(2,N+1)])
-    east = np.array([np.arange(N,N**2-N+1,N),np.arange(2*N,N**2+1,N)])
-    north = np.array([np.arange(N**2,N**2-N+1,-1),np.arange(N**2-1,N**2-N,-1)])
-    west = np.array([np.arange(N**2-N+1,N-1,-N),np.arange(N**2-2*N+1,0,-N)])
+    south = np.array([np.arange(1, N), np.arange(2, N+1)])
+    east = np.array([np.arange(N, N ** 2 - N + 1, N), np.arange(2 * N, N ** 2 + 1, N)])
+    north = np.array([np.arange(N ** 2, N ** 2 - N + 1, -1), np.arange(N ** 2 - 1, N ** 2 - N, -1)])
+    west = np.array([np.arange(N ** 2 - N + 1, N - 1, -N), np.arange(N ** 2 - 2 * N + 1, 0, -N)])
     L1 = np.shape(south)[1]
     L2 = np.shape(east)[1]
     L3 = np.shape(west)[1]
     L4 = np.shape(north)[1]
-    edge = np.zeros((L1+L2+L3+L4,2),dtype=np.int)
-    for i in range(0,L1):
-        edge[i,0] = south[0,i]
-        edge[i,1] = south[1,i]
-    for i in range(L1,L1+L2):
-        edge[i,0] = east[0,i-L1]
-        edge[i,1] = east[1,i-L1]
-    for i in range(L1+L2,L1+L2+L3):
-        edge[i,0] = north[0,i-L1-L2]
-        edge[i,1] = north[1,i-L1-L2]
-    for i in range(L1+L2+L3,L1+L2+L3+L4):
-        edge[i,0] = west[0,i-L1-L2-L3]
-        edge[i,1] = west[1,i-L1-L2-L3]
+    edge = np.zeros((L1 + L2 + L3 + L4, 2), dtype=np.int)
+    for i in range(0, L1):
+        edge[i, 0] = south[0, i]
+        edge[i, 1] = south[1, i]
+    for i in range(L1, L1+L2):
+        edge[i, 0] = east[0, i - L1]
+        edge[i, 1] = east[1, i - L1]
+    for i in range(L1 + L2, L1 + L2 + L3):
+        edge[i, 0] = north[0, i - L1 - L2]
+        edge[i, 1] = north[1, i - L1 - L2]
+    for i in range(L1 + L2 + L3, L1 + L2 + L3 + L4):
+        edge[i, 0] = west[0, i - L1 - L2 - L3]
+        edge[i, 1] = west[1, i - L1 - L2 - L3]
     edge -= 1
 
-    return p,tri,edge
+    return p, tri, edge
