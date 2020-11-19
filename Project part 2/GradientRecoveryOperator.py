@@ -6,7 +6,7 @@ Created on 18.11.2020
 """
 import numpy as np
 from timeit import default_timer as timer
-from getdisc import GetDisc
+from getplate import getPlate
 from Gauss_quadrature import quadrature2D
 from Heat2D import ThetaMethod_Heat2D
 from plotingfunctions import plotError, plottime
@@ -75,8 +75,14 @@ def get_alpha(u_h0, u_h1, u_h2, nk, p, tri):
             by[:, 1] += p_vec(*rk) * u_h1_y
             by[:, 2] += p_vec(*rk) * u_h2_y
         # Now solve to get alpha_x and alpha_y for node i
-        alpha_x = np.linalg.solve(M, bx)
-        alpha_y = np.linalg.solve(M, by)
+        try:
+            alpha_x = np.linalg.solve(M, bx)
+        except np.linalg.LinAlgError:
+            alpha_x = np.linalg.lstsq(M, bx, rcond=None)[0]
+        try:
+            alpha_y = np.linalg.solve(M, by)
+        except np.linalg.LinAlgError:
+            alpha_y = np.linalg.lstsq(M, by, rcond=None)[0]
         alpha_dict[i+1] = [alpha_x, alpha_y]
     return alpha_dict
 
@@ -88,7 +94,7 @@ def Error_Estimate_G(N, u_hdict):
     u_h1, t1 = u_hdict[1]
     u_h2, t2 = u_hdict[2]
 
-    p, tri, edge = GetDisc(N+1)
+    p, tri, edge = getPlate(N+1)
     #   p		Nodal points, (x,y)-coordinates for point i given in row i.
     #   tri   	Elements. Index to the three corners of element i given in row i.
     #   edge  	Edge lines. Index list to the two corners of edge line i given in row i.
@@ -163,7 +169,7 @@ def Error_Estimate_G(N, u_hdict):
 
 def get_error_estimate(f, uD, duDdt, u0, N_list=None, Nt=100, beta=5, alpha=9.62e-5, theta=0.5, T=1, Rg_indep_t=True, f_indep_t=True):
     if N_list is None:
-        N_list = [12, 34, 129, 484, 6900]
+        N_list = [1, 2, 4, 8, 32]
         # these values give h=1/2^i for i=0,1,2,3 and 5, see findh.py
 
     m = len(N_list)
@@ -193,7 +199,7 @@ def get_error_estimate(f, uD, duDdt, u0, N_list=None, Nt=100, beta=5, alpha=9.62
     for i in range(3):
         # the relative error
         # note eta_i / eta_5 = eta_i^2 / eta_5^2, so we can work with eta^2
-        error_dict[i] = error_dict[i]
+        error_dict[i] = np.sqrt(error_dict[i])
 
 
     return N_list, error_dict, time_vec1, time_vec2, time_stamps
@@ -210,10 +216,7 @@ if __name__ == "__main__":
 
     # save the plot as pdf?
     save = False
-    # [12, 24, 34, 66, 129, 270, 484, 6900]
-    # [12, 24, 34, 66, 129, 270, 484]
-    # [12, 34, 129, 484]
-    N_list, error_dict, time_vec1, time_vec2, time_stamps = get_error_estimate(f, uD, duDdt, u0, N_list=[12, 24, 34, 66, 129, 270])
+    N_list, error_dict, time_vec1, time_vec2, time_stamps = get_error_estimate(f, uD, duDdt, u0, N_list=[1, 2, 4, 8])
 
     print(error_dict)
     plotError(N_list, error_dict, time_stamps, save=save)

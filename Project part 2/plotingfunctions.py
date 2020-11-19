@@ -6,10 +6,8 @@ Created on 16.11.2020
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from getdisc import GetDisc
 from getplate import getPlate
 from Heat2D import ThetaMethod_Heat2D
-from findh import h_finder
 
 
 import sympy as sym
@@ -62,28 +60,26 @@ def contourplot_Heat2D(N, u_hdict, save_name, save=False):
     levels = np.linspace(-1, 1, 9)
 
     plt.figure(figsize=(21, 6))
-    plt.title('$u_h(t, x,y)$, for $N=' + str(N) + "$")
     # Create plot of numerical solution
     plt.subplot(1, 3, 1)
     plt.gca().set_aspect('equal')
     plt.tricontourf(x, y, tri, u_h0, levels=levels, extend='both')
     plt.colorbar()
-    plt.title("$u_h(t, x,y)$ at $t=" + str(t0) + "$")
+    plt.title("$u_h(t, x,y)$ at $t=" + "{:.2f}".format(t0) + "$ for $N=" +str(N) + "$")
 
     # Create plot of analytical solution
     plt.subplot(1, 3, 2)
     plt.gca().set_aspect('equal')
     plt.tricontourf(x, y, tri, u_h1, levels=levels, extend='both')
     plt.colorbar()
-    plt.title("$u_h(t, x,y)$ at $t=" + str(t1) + "$")
+    plt.title("$u_h(t, x,y)$ at $t=" + "{:.2f}".format(t1) + "$ for $N=" +str(N) + "$")
 
     # Create plot of absolute difference between the two solutions
     plt.subplot(1, 3, 3)
     plt.gca().set_aspect('equal')
     plt.tricontourf(x, y, tri, u_h2, levels=levels, extend='both')
     plt.colorbar()
-
-    plt.title("$u_h(t, x,y)$ at $t=" + str(t2) + "$")
+    plt.title("$u_h(t, x,y)$ at $t=" + "{:.2f}".format(t2) + "$ for $N=" +str(N) + "$")
 
     # adjust
     plt.subplots_adjust(wspace=0.4)
@@ -216,7 +212,7 @@ if __name__ == "__main__":
     N = 16
     Nt = 34
     alpha = 9.62e-5
-    beta = 5
+    beta = 3
     # save the plot as pdf?
     save = False
 
@@ -228,6 +224,10 @@ if __name__ == "__main__":
     contourplot_Heat2D(N, u_hdict, save_name, save=save)
     save_name = "BE000"
     u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=1, T=1, f_indep_t=True)
+    contourplot_Heat2D(N, u_hdict, save_name, save=save)
+
+    save_name = "ITrap000b10"
+    u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, 7, f, uD, duDdt, u0, theta=0.5, T=1, f_indep_t=True)
     contourplot_Heat2D(N, u_hdict, save_name, save=save)
 
     f = lambda x, y, t, beta=5: np.exp(- beta * (x * x + y * y))
@@ -264,7 +264,7 @@ if __name__ == "__main__":
     contourplot_Heat2D(N, u_hdict, save_name, save=save)
 
     # list of N to plot for
-    N_list = [1, 2, 4, 8, 32]
+    N_list = [1, 2, 4, 8]
     # make a meshplot
     meshplot_v2(N_list, save=False)
 
