@@ -7,6 +7,7 @@ Created on 16.11.2020
 import numpy as np
 import matplotlib.pyplot as plt
 from getdisc import GetDisc
+from getplate import getPlate
 from Heat2D import ThetaMethod_Heat2D
 from findh import h_finder
 
@@ -47,7 +48,7 @@ def contourplot_Heat2D(N, u_hdict, save_name, save=False):
 
     """
     # get the nodes, elements and edge lines
-    p, tri, edge = GetDisc(N)
+    p, tri, edge = getPlate(N+1)
 
     u_h0, t0 = u_hdict[0]
     u_h1, t1 = u_hdict[1]
@@ -147,7 +148,7 @@ def meshplot_v2(N_list, nCols=4, save=False):
             else:
                 ax = axs[i, j]
                 # get the nodes, elements and edge lines
-                p, tri, edge = GetDisc(N)
+                p, tri, edge = getPlate(N+1)
                 # plot them with triplot
                 ax.triplot(p[:, 0], p[:, 1], tri)
                 # label the axes
@@ -166,7 +167,7 @@ def meshplot_v2(N_list, nCols=4, save=False):
 
 def plotError(N_list, error_dict, time_stamps, save=False):
 
-    h_vec = h_finder(N_list, ifprint=False)
+    h_vec = np.array([1 / N for N in N_list])
     plt.figure("error", figsize=(14, 7))
     for key in error_dict:  # key is a int
         error = error_dict[key]
@@ -187,7 +188,7 @@ def plotError(N_list, error_dict, time_stamps, save=False):
     plt.show()
 
 def plottime(N_list, time_vec1, time_vec2, save=False):
-    h_vec = h_finder(N_list, ifprint=False)
+    h_vec = np.array([1 / N for N in N_list])
     plt.figure("time", figsize=(14, 7))
     plt.plot(h_vec, time_vec2, 'o-', label="Time to find error estimate")
     plt.plot(h_vec, time_vec1, 'o-', label="Time to solve problem")
@@ -202,13 +203,6 @@ def plottime(N_list, time_vec1, time_vec2, save=False):
         plt.savefig("plot/Time.pdf")
     plt.show()
 
-def Dirc_eps(xvec, yvec, eps=0.125):
-    out_vec = np.zeros_like(xvec)
-    for i in range(len(xvec)):
-        if xvec[i]**2 + yvec[i]**2 <= eps:
-            out_vec[i] = 1
-    return out_vec
-
 
 if __name__ == "__main__":
     f = lambda x, y, t, beta=5: np.exp(- beta * (x*x + y*y))
@@ -219,8 +213,8 @@ if __name__ == "__main__":
     
     u0 = lambda x, y: np.zeros_like(x)
     
-    N = 500
-    Nt = 100
+    N = 16
+    Nt = 34
     alpha = 9.62e-5
     beta = 5
     # save the plot as pdf?
@@ -238,23 +232,12 @@ if __name__ == "__main__":
 
     f = lambda x, y, t, beta=5: np.exp(- beta * (x * x + y * y))
 
-    uD = lambda x, y, t: np.zeros_like(x)
-
-    duDdt = lambda x, y, t: np.zeros_like(x)
-
-    u0 = lambda x, y: Dirc_eps(x, y)
-    save_name = "ITrap00Dirc"
-    u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=1, f_indep_t=True)
-    contourplot_Heat2D(N, u_hdict, save_name, save=save)
-
-    f = lambda x, y, t, beta=5: np.exp(- beta * (x * x + y * y))
-
     uD = lambda x, y, t: y / 2 + 1/ 2
 
     duDdt = lambda x, y, t: np.zeros_like(x)
 
     u0 = lambda x, y: y / 2 + 1/ 2
-    save_name = "ITrap00y"
+    save_name = "ITrapy0y"
     u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=1, f_indep_t=True)
     contourplot_Heat2D(N, u_hdict, save_name, save=save)
 
@@ -281,8 +264,8 @@ if __name__ == "__main__":
     contourplot_Heat2D(N, u_hdict, save_name, save=save)
 
     # list of N to plot for
-    N_list = [11, 34, 129, 484, 500]  # [12, 24, 34, 66, 129, 270, 484, 6900]
+    N_list = [1, 2, 4, 8, 32]
     # make a meshplot
-    meshplot_v2(N_list, save=save)
+    meshplot_v2(N_list, save=False)
 
 

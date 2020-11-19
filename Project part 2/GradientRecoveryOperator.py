@@ -88,7 +88,7 @@ def Error_Estimate_G(N, u_hdict):
     u_h1, t1 = u_hdict[1]
     u_h2, t2 = u_hdict[2]
 
-    p, tri, edge = GetDisc(N)
+    p, tri, edge = GetDisc(N+1)
     #   p		Nodal points, (x,y)-coordinates for point i given in row i.
     #   tri   	Elements. Index to the three corners of element i given in row i.
     #   edge  	Edge lines. Index list to the two corners of edge line i given in row i.
@@ -193,7 +193,7 @@ def get_error_estimate(f, uD, duDdt, u0, N_list=None, Nt=100, beta=5, alpha=9.62
     for i in range(3):
         # the relative error
         # note eta_i / eta_5 = eta_i^2 / eta_5^2, so we can work with eta^2
-        error_dict[i] = error_dict[i] / error_dict[i][-1]
+        error_dict[i] = error_dict[i]
 
 
     return N_list, error_dict, time_vec1, time_vec2, time_stamps
@@ -213,7 +213,7 @@ if __name__ == "__main__":
     # [12, 24, 34, 66, 129, 270, 484, 6900]
     # [12, 24, 34, 66, 129, 270, 484]
     # [12, 34, 129, 484]
-    N_list, error_dict, time_vec1, time_vec2, time_stamps = get_error_estimate(f, uD, duDdt, u0, N_list=[12, 24, 34, 66, 129, 270, 484])
+    N_list, error_dict, time_vec1, time_vec2, time_stamps = get_error_estimate(f, uD, duDdt, u0, N_list=[12, 24, 34, 66, 129, 270])
 
     print(error_dict)
     plotError(N_list, error_dict, time_stamps, save=save)
