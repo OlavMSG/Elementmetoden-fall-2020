@@ -167,7 +167,9 @@ def Error_Estimate_G(N, u_hdict):
     return eta2_vec
 
 
-def get_error_estimate_G(f, uD, duDdt, u0, N_list=None, Nt=100, beta=5, alpha=9.62e-5, theta=0.5, T=1, Rg_indep_t=True, f_indep_t=True):
+def get_error_estimate_G(f, uD, duDdt, u0, Nt, N_list=None, beta=5, alpha=9.62e-5, theta=0.5, T=2*np.pi,
+                         Rg_indep_t=True, f_indep_t=False):
+    global time_stamps
     if N_list is None:
         N_list = [2, 4, 6,  8]  # not 32 here
         # these values give h=1/2^i for i=0,1,2,3 and 5, see findh.py
@@ -179,7 +181,8 @@ def get_error_estimate_G(f, uD, duDdt, u0, N_list=None, Nt=100, beta=5, alpha=9.
     for i in range(m):
         N = N_list[i]
         start_t = timer()
-        u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=theta, T=T, Rg_indep_t=Rg_indep_t, f_indep_t=f_indep_t)
+        u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=theta, T=T,
+                                     Rg_indep_t=Rg_indep_t, f_indep_t=f_indep_t)
         end_t = timer()
         time_vec1[i] = end_t - start_t
         print("N =", N, "took", end_t-start_t, "seconds")
@@ -199,23 +202,5 @@ def get_error_estimate_G(f, uD, duDdt, u0, N_list=None, Nt=100, beta=5, alpha=9.
     for i in range(3):
         error_dict[i] = np.sqrt(error_dict[i])
 
-
     return N_list, error_dict, time_vec1, time_vec2, time_stamps
 
-if __name__ == "__main__":
-
-    f = lambda x, y, t, beta: np.exp(- beta * (x * x + y * y))
-
-    uD = lambda x, y, t: np.zeros_like(x)
-
-    duDdt = lambda x, y, t: np.zeros_like(x)
-
-    u0 = lambda x, y: np.zeros_like(x)
-
-    # save the plot as pdf?
-    save = False
-    N_list, error_dict, time_vec1, time_vec2, time_stamps = get_error_estimate_G(f, uD, duDdt, u0)
-
-    plotError(N_list, error_dict, time_stamps, "GRO", "recovered gradient", save=save)
-
-    plottime(N_list, "GRO", time_vec1, time_vec2, save=save)

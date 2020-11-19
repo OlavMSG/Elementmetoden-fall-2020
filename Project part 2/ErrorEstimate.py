@@ -91,23 +91,23 @@ def Estimate_Error(u_hNdict, N_list):
         u_h1 = u_hdict[1][0].reshape((N+1, N+1))
         u_h2 = u_hdict[2][0].reshape((N+1, N+1))
 
+        # find how many times we must multiply N by 2 to get Nbar
         k = np.int(np.log2(Nbar // N))
-        u_h0int = u_h0.copy()
-        u_h1int = u_h1.copy()
-        u_h2int = u_h2.copy()
+
+        # initial setup
         M = N
         for j in range(k):
             # Use linear interpolation to get to the grid 2*M
             # Do this until 2*M = Nbar
             # Note this is equivalent to interpolating directly up to Nbar.
-            u_h0int = interpolation(u_h0int, M)
-            u_h1int = interpolation(u_h1int, M)
-            u_h2int = interpolation(u_h2int, M)
+            u_h0 = interpolation(u_h0, M)
+            u_h1 = interpolation(u_h1, M)
+            u_h2 = interpolation(u_h2, M)
             M *= 2
 
-        err0 = u_h0bar - u_h0int
-        err1 = u_h1bar - u_h1int
-        err2 = u_h2bar - u_h2int
+        err0 = u_h0bar - u_h0
+        err1 = u_h1bar - u_h1
+        err2 = u_h2bar - u_h2
 
         error_dict[0][i] = np.linalg.norm(err0, ord="fro") / np.linalg.norm(u_h0bar, ord="fro")
         error_dict[1][i] = np.linalg.norm(err1, ord="fro") / np.linalg.norm(u_h1bar, ord="fro")
@@ -116,19 +116,18 @@ def Estimate_Error(u_hNdict, N_list):
     return error_dict
 
 
-def get_error_estimate(f, uD, duDdt, u0, N_list=None, Nt=100, beta=5, alpha=9.62e-5, theta=0.5, T=1, Rg_indep_t=True, f_indep_t=True):
-    global time_stamps
+def get_error_estimate(f, uD, duDdt, u0, Nt, N_list=None, beta=5, alpha=9.62e-5, theta=0.5, T=2*np.pi,
+                       Rg_indep_t=True, f_indep_t=False):
     if N_list is None:
         N_list = [1, 2, 4, 8, 32]
-        # these values give h=1/2^i for i=0,1,2,3 and 5, see findh.py
-
     m = len(N_list)
     time_vec1 = np.zeros(m)
     u_hNdict = {}
     for i in range(m):
         N = N_list[i]
         start_t = timer()
-        u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=theta, T=T, Rg_indep_t=Rg_indep_t, f_indep_t=f_indep_t)
+        u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=theta, T=T,
+                                     Rg_indep_t=Rg_indep_t, f_indep_t=f_indep_t)
         end_t = timer()
         u_hNdict[N] = u_hdict
         time_vec1[i] = end_t - start_t
@@ -142,20 +141,3 @@ def get_error_estimate(f, uD, duDdt, u0, N_list=None, Nt=100, beta=5, alpha=9.62
 
     return N_list, error_dict, time_vec1, time_stamps
 
-if __name__ == "__main__":
-
-    f = lambda x, y, t, beta: np.exp(- beta * (x * x + y * y))
-
-    uD = lambda x, y, t: np.zeros_like(x)
-
-    duDdt = lambda x, y, t: np.zeros_like(x)
-
-    u0 = lambda x, y: np.zeros_like(x)
-
-    # save the plot as pdf?
-    save = False
-    N_list, error_dict, time_vec1, time_stamps = get_error_estimate(f, uD, duDdt, u0, N_list=[1, 2, 4, 8])
-
-    plotError(N_list[:-1], error_dict, time_stamps, "Rel", "relative Error", save=save)
-
-    plottime(N_list, "Rel", time_vec1, save=save)

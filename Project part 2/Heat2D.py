@@ -14,29 +14,41 @@ from Gauss_quadrature import quadrature2D
 
 
 def get_in_and_edge_index(tri, edge):
+
+    # find the unique edge index
     edge_index = np.unique(edge)
+    # find the unique indexes
     un_index = np.unique(tri)
+    # inner index is unique index minus edge indexes
     in_index = np.setdiff1d(un_index, edge_index)
     return in_index, edge_index
 
 def indexmap(N_in, in_index):
+    # define a dictionary for the index mapping from in_index to 0 - N_in-1
     index_map = dict(zip(in_index, np.arange(N_in)))
     return index_map
 
 def imapfunc(indexs, index_map):
+    # check if indexes is empty
     if len(indexs) > 0:
+        # map the indexes via the index map
         args = np.zeros_like(indexs)
         for i in range(len(indexs)):
             args[i] = index_map[indexs[i]]
         return args
     else:
+        # indexes is empty
         return []
 
 
 def get_u_h(N, u_h1, Rg, in_index, edge_index):
+
     N2 = (N + 1) * (N + 1)
+    # initialize u_h
     u_h = np.zeros(N2)
+    # put the inner node values in u_h
     u_h[in_index] = u_h1
+    # put the edge node values in u_h
     u_h[edge_index] = Rg
     return u_h
 
@@ -63,13 +75,16 @@ def build_Mk_Ak_F0_local(p1, p2, p3, f, alpha, beta, in_point, len_argk):
     # Calculate the mass matrix Mk and F_local
     Mk = np.zeros((3, 3))
     F0_local = np.zeros(len_argk)
+    # index variable
     k = 0
     for i in range(3):
         if in_point[i] != -1:
+            # function to integrate
             f_phi_i = lambda x, y: f(x, y, 0, beta) * phi(x, y)[i]
             F0_local[k] = quadrature2D(p1, p2, p3, 4, f_phi_i)
             k += 1
         for j in range(3):
+            # function to integrate
             g_ij = lambda x, y: phi(x, y)[i] * phi(x, y)[j]
             Mk[i, j] = quadrature2D(p1, p2, p3, 4, g_ij)
 
@@ -166,7 +181,7 @@ def build_Ft(N_in, p, tri, in_index, edge_index, f, beta, t):
     return Ft
 
 
-def ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=1, Rg_indep_t=True, f_indep_t=True):
+def ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=1, Rg_indep_t=True, f_indep_t=False):
     p, tri, edge = getPlate(N+1)
     #   p		Nodal points, (x,y)-coordinates for point i given in row i.
     #   tri   	Elements. Index to the three corners of element i given in row i.
@@ -248,23 +263,6 @@ def ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5, T=1, Rg_
         F_current = F_next
 
     return u_hdict
-
-if __name__ == "__main__":
-
-
-    f = lambda x, y, t, beta: np.exp(- beta * (x*x + y*y))
-
-    uD = lambda x, y, t: np.zeros_like(x)
-
-    duDdt = lambda x, y, t: np.zeros_like(x)
-
-    u0 = lambda x, y: np.zeros_like(x)
-
-    N = 5
-    Nt = 10
-    alpha = 1
-    beta = 1
-    u_hdict = ThetaMethod_Heat2D(N, Nt, alpha, beta, f, uD, duDdt, u0, theta=0.5)
 
 
 
