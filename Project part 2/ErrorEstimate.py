@@ -156,7 +156,6 @@ if __name__ == "__main__":
     save = False
     N_list, error_dict, time_vec1, time_stamps = get_error_estimate(f, uD, duDdt, u0, N_list=[1, 2, 4, 8])
 
-    print(error_dict)
     plotError(N_list[:-1], error_dict, time_stamps, "Rel", "relative Error", save=save)
 
     plottime(N_list, "Rel", time_vec1, save=save)

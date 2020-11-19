@@ -169,7 +169,7 @@ def Error_Estimate_G(N, u_hdict):
 
 def get_error_estimate_G(f, uD, duDdt, u0, N_list=None, Nt=100, beta=5, alpha=9.62e-5, theta=0.5, T=1, Rg_indep_t=True, f_indep_t=True):
     if N_list is None:
-        N_list = [2, 4, 6,  8, 32]
+        N_list = [2, 4, 6,  8]  # not 32 here
         # these values give h=1/2^i for i=0,1,2,3 and 5, see findh.py
 
     m = len(N_list)
@@ -214,9 +214,8 @@ if __name__ == "__main__":
 
     # save the plot as pdf?
     save = False
-    N_list, error_dict, time_vec1, time_vec2, time_stamps = get_error_estimate_G(f, uD, duDdt, u0, N_list=[2, 4, 6, 8])
+    N_list, error_dict, time_vec1, time_vec2, time_stamps = get_error_estimate_G(f, uD, duDdt, u0)
 
-    print(error_dict)
     plotError(N_list, error_dict, time_stamps, "GRO", "recovered gradient", save=save)
 
     plottime(N_list, "GRO", time_vec1, time_vec2, save=save)
