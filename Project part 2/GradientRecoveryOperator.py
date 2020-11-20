@@ -9,19 +9,55 @@ from timeit import default_timer as timer
 from getplate import getPlate
 from Gauss_quadrature import quadrature2D
 from Heat2D import ThetaMethod_Heat2D
-from plotingfunctions import plotError, plottime
 
 
 def get_nodal_patch(node, tri):
+    """
+    Function to get the nodlal patch (indexes)
+
+    Parameters
+    ----------
+    node : int
+        index of a node.
+    tri : numpy.array
+        Nodal points, (x,y)-coordinates for point i given in row i.
+
+    Returns
+    -------
+    nodal_patch : numpy.array
+        Nodal patch, same structure as tri.
+
+    """
+    # initilze as empty
     nodal_patch = []
+    # for all elements in the triangulization
     for nk in tri:
+        # if the node is used on the element append it
         if node in nk:
             nodal_patch.append(nk)
+    # convert to array.
     nodal_patch = np.asarray(nodal_patch)
     return nodal_patch
 
 
 def centroid(nk, p):
+    """
+    Function to get the centroid of a element
+
+    Parameters
+    ----------
+    nk : numpy.array
+        Array of indexes of the vertices of the element triangle.
+    p : numpy.array
+        Nodal points, (x,y)-coordinates for point i given in row i.
+
+    Returns
+    -------
+    ck : numpy.array
+        The centroid in xy-coordinates.
+
+    """
+    # the centroid is (1/3,1/3,1/3) in area-coordinated, convert to xy
     ck = (p[nk[0], :] + p[nk[1], :] + p[nk[2], :]) / 3
     return ck
 
@@ -33,10 +69,35 @@ Mk = lambda x, y: np.outer(p_vec(x, y), p_vec(x, y))
 
 
 def get_alpha(u_h0, u_h1, u_h2, nk, p, tri):
+    """
+    Function to get alpha, (minimizer of problem)
 
+    Parameters
+    ----------
+    u_h0 : numpy.array
+        u_h for the first time stamp.
+    u_h1 : numpy.array
+        u_h for the second time stamp.
+    u_h2 : numpy.array
+        u_h for the third time stamp.
+    nk : numpy.array
+        Array of indexes of the vertices of the element triangle.
+    p : numpy.array
+        Nodal points, (x,y)-coordinates for point i given in row i.
+    tri : numpy.array
+        Nodal points, (x,y)-coordinates for point i given in row i.
+
+    Returns
+    -------
+    alpha_dict : dictionary
+        dictionary of alphas.
+        
+    """
+    # initilize 
     alpha_dict = {}
-
+    # for all nodes on the element triangle
     for i in range(3):
+        # get the node
         node = nk[i]
         nodal_patch = get_nodal_patch(node, tri)
         # matrix M for min problem
@@ -75,6 +136,8 @@ def get_alpha(u_h0, u_h1, u_h2, nk, p, tri):
             by[:, 1] += p_vec(*rk) * u_h1_y
             by[:, 2] += p_vec(*rk) * u_h2_y
         # Now solve to get alpha_x and alpha_y for node i
+        # if M is singular, solve least square instead
+        # M is often singular in the corner of the quadrat 
         try:
             alpha_x = np.linalg.solve(M, bx)
         except np.linalg.LinAlgError:
@@ -88,8 +151,23 @@ def get_alpha(u_h0, u_h1, u_h2, nk, p, tri):
 
 
 def Error_Estimate_G(N, u_hdict):
-    # Function find the Error estimate for the three first entry's in u_hdict using the Gradient Recovery Operator
+    """
+    Function find the Error estimate for the three first entry's in u_hdict using the Gradient Recovery Operator
 
+    Parameters
+    ----------
+    N : int
+        Number of nodal edges on the x-axis.
+    u_hdict : dictionary
+        dictionary of three (u_h, t_i)-values, where t_i is the time stamp for when u_h is.
+
+    Returns
+    -------
+    eta2_vec : numpy.array
+        estimates error for the three time stamps
+
+    """
+    # get u_h and time stamps
     u_h0, t0 = u_hdict[0]
     u_h1, t1 = u_hdict[1]
     u_h2, t2 = u_hdict[2]
@@ -113,9 +191,7 @@ def Error_Estimate_G(N, u_hdict):
         # rows: t0, t1, t1
         gradu_hx = np.zeros((3, 3))
         gradu_hy = np.zeros((3, 3))
-        # array for g_x and g_y in each point, rows: t0, t1, t1
-        g_x = np.zeros((3, 3))
-        g_y = np.zeros((3, 3))
+        # get alpha
         alpha_dict = get_alpha(u_h0, u_h1, u_h2, nk, p, tri)
         alpha1 = alpha_dict[1]
         alpha2 = alpha_dict[2]
@@ -157,18 +233,63 @@ def Error_Estimate_G(N, u_hdict):
 
         # the function of i
         Fi = lambda x, y, i: Fx(x, y, i) ** 2 + Fy(x, y, i) ** 2
-
         # now do the integration
         for i in range(3):
             # the function
             F = lambda x, y: Fi(x, y, i)
             eta2_vec[i] += quadrature2D(p1, p2, p3, 4, F)
-
     return eta2_vec
 
 
 def get_error_estimate_G(f, uD, duDdt, u0, Nt, N_list=None, beta=5, alpha=9.62e-5, theta=0.5, T=2*np.pi,
                          Rg_indep_t=True, f_indep_t=False):
+    """
+    Function to get the error estimate using the recovered gradient operator
+
+    Parameters
+    ----------
+    f : function pointer
+        The source function.
+    uD : function pointer
+        Value of u_h on the boundary.
+    duDdt : function pointer
+        Derivative of u_h on the boundary, derivative of uD.
+    u0 : function pointer
+        initial function for t=0.
+    Nt : int
+        number of time steps
+    N_list : list, optional
+        list of N-s. The default is None.
+    beta : float, optional
+        parameter beta of the source function. The default is 5.
+    alpha : float, optional
+        parameter alpha of the equation. The default is 9.62e-5.
+    heta : float, optional
+        parameter for the time integration method.
+        0: Forward Euler
+        0.5: Implicit Traps
+        1: Backward Euler
+        The default is 0.5.
+    T : float, optional
+        The end time of the interval [0, T]. The default is 2*np.pi.
+    Rg_indep_t : bool, optional
+        Is the boundary function independent of t. The default is True.
+    f_indep_t : bool, optional
+        Is the source function independent of t. The default is False.
+
+    Returns
+    -------
+    N_list : list
+        list of N-s.
+    error_dict : dictionary
+        dictionary of relativ errors.
+    time_vec1 : numpy.array
+        Array of times to solve the heat equation.
+    time_vec2 : numpy.array
+        Array of times to find the error estimate.
+    time_stamps : numpy.array
+        Array of the time stamps.
+    """
     global time_stamps
     if N_list is None:
         N_list = [2, 4, 6,  8]  # not 32 here
@@ -200,7 +321,8 @@ def get_error_estimate_G(f, uD, duDdt, u0, Nt, N_list=None, beta=5, alpha=9.62e-
             time_stamps = np.array([u_hdict[0][1], u_hdict[1][1], u_hdict[2][1]])
 
     for i in range(3):
+        # take the sqrt.
         error_dict[i] = np.sqrt(error_dict[i])
-
+    # return
     return N_list, error_dict, time_vec1, time_vec2, time_stamps
 

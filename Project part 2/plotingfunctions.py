@@ -28,13 +28,11 @@ def contourplot_Heat2D(N, u_hdict, save_name, save=False):
     Parameters
     ----------
     N : int
-        Number of nodes in the mesh.
-    numerical_solution : numpy array (list)
-        The numerical solution to the problem solved with B.C type.
-    BC_type : str
-        A string containing the name of the B.C. type.
-    u_exact_func : function pointer
-        Pointer to the function for the exact solution.
+        Number of nodal edges on the x-axis.
+    u_hdict : dictionary
+        Dictionary with at least three entries, the entry's are u_h at a time stamp t.
+    save_name : string
+        The name of the plot for saving.
     save : bool, optional
         Will the plot be saved in the plot folder. The default is False.
         Note: the plot folder must exist!
@@ -98,8 +96,10 @@ def meshplot_v2(N_list, nCols=4, save=False):
     ----------
     N_list : list
         A list containing N's to plot a mesh for.
+        N : int
+        Number of nodal edges on the x-axis.
     nCols : int, optional
-        Number of columns in the final plot, meaning subplots per row. The default is 3.
+        Number of columns in the final plot, meaning subplots per row. The default is 4.
     save : bool, optional
         Will the plot be saved in the plot folder. The default is False.
         Note: the plot folder must exist!
@@ -161,35 +161,99 @@ def meshplot_v2(N_list, nCols=4, save=False):
 
 
 def plotError(N_list, error_dict, time_stamps, save_name, label_txt, save=False):
+    """
+    Function to make a loglog error plot of error against the element size h
+
+    Parameters
+    ----------
+    N_list : list
+        A list containing N's to plot a mesh for.
+        N : int
+        Number of nodal edges on the x-axis.
+    error_dict : dictionary
+        Dictionary containing the different errors for different time stamps.
+    time_stamps : dictionary
+        Dictionary of time stamps.
+    save_name : string
+        The name of the plot for saving.
+    label_txt : string
+        The text for the label.
+    save : bool, optional
+        Will the plot be saved in the plot folder. The default is False.
+        Note: the plot folder must exist!
+
+    Returns
+    -------
+    None.
+
+    """
+    # get the h values for the N-s
     h_vec = np.array([1 / N for N in N_list])
+    # make a plot
     plt.figure("error", figsize=(14, 7))
     for key in error_dict:  # key is a int
+        # get the error an time stamp
         error = error_dict[key]
         t = np.round(time_stamps[key], 2)
+        # Find best straith line of the log of the samples nodes
         p = np.polyfit(np.log(h_vec), np.log(error), deg=1)
+        # p[0] then is the convergence order
         print("Got convergence of order ", p[0], "for t =", t)
+        # the label
         label = label_txt + "$(t=" + str(t) + ")$,\nconv.order = $" +"{:.3f}".format(p[0]) +"$"
+        # plot
         plt.loglog(h_vec, error, 'o-', label=label, basex=2)
-        # err2 = np.exp(p[0] * np.log(h_vec) + p[1])
-        # plt.loglog(h_vec, err2)
+    
+    # label the axis, set the grid visible
     plt.xlabel("Element size, $h$")
     plt.ylabel("log " + label_txt)
     plt.gca().invert_xaxis()
     plt.grid()
     plt.title("Error Estimate using " + label_txt)
     plt.legend(loc=9, bbox_to_anchor=(0.5, -0.13), ncol=3)
+    #save the plot?
     if save:
         plt.savefig("plot/" + save_name +".pdf", bbox_inches='tight')
     plt.show()
 
 
 def plottime(N_list, save_name, time_vec1, time_vec2=None, save=False):
+    """
+    Function to make a plot of the time used to solve the problem, 
+    and if time_vec is given the time to find the error estimate
+
+    Parameters
+    ----------
+    N_list : list
+        A list containing N's to plot a mesh for.
+        N : int
+        Number of nodal edges on the x-axis.
+    save_name : string
+        The name of the plot for saving.
+    time_vec1 : numpy.array
+        Array of time values for solving the problem.
+    time_vec2 : numpy.array, optional
+        Array of time values for finding the error estimate. The default is None.
+    save : bool, optional
+        Will the plot be saved in the plot folder. The default is False.
+        Note: the plot folder must exist!
+
+    Returns
+    -------
+    None.
+
+    """
+    # get the h values for the N-s
     h_vec = np.array([1 / N for N in N_list])
+    # make figure
     plt.figure("time", figsize=(12, 7))
     plt.subplot(111)
+    # check if time_vec2 is given, if so plot
     if time_vec2 is not None:
         plt.plot(h_vec, time_vec2, 'o-', label="Time to find error estimate")
+    # plot
     plt.plot(h_vec, time_vec1, 'o-', label="Time to solve the problem")
+    # label the axis, set the grid visible
     plt.xlabel("Element size, $h$")
     plt.ylabel("Time, $t$")
     plt.gca().invert_xaxis()
@@ -198,6 +262,7 @@ def plottime(N_list, save_name, time_vec1, time_vec2=None, save=False):
     # adjust
     plt.subplots_adjust(hspace=0.4)
     plt.legend(loc=9, bbox_to_anchor=(0.5, -0.13), ncol=3)
+    # save the plot?
     if save:
         plt.savefig("plot/Time" + save_name + ".pdf", bbox_inches='tight')
     plt.show()

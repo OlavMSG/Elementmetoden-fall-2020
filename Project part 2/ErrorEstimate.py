@@ -7,10 +7,25 @@ Created on 19.11.2020
 import numpy as np
 from timeit import default_timer as timer
 from Heat2D import ThetaMethod_Heat2D
-from plotingfunctions import plotError, plottime
-from getplate import getPlate
+
 
 def check_N(N, Nbar):
+    """
+    Function to check if Nbar can be devided by only 2 multiple times to get N
+
+    Parameters
+    ----------
+    N : int
+        Number we want to now is is factor of Nbar in form Nbar = 2^i*N.
+    Nbar : int
+        Number we want to decide by 2 multiple times.
+
+    Returns
+    -------
+    bool
+        Cab Nbar we written as Nbar = 2^i*N.
+
+    """
     while Nbar != N:
         if Nbar % 2 != 0:
             return False
@@ -19,25 +34,35 @@ def check_N(N, Nbar):
 
 
 def interpolation(ec, M):
-    # Taken from Olav Gran's Numerical Linear Algebra Project, TMA4205
-    # Using linear interpolation.
-    # function to do the prolongation/interploation of the error
-    # ec - the error to interpolate
-    # M - the size of the rhs matrix above is (M+1)x(M+1)
+    """
+    Function to do linear interpolation from coarse grid M to fine grid N = 2 * M
+    Note: Taken from Olav Milian Schmitt Gran's Numerical Linear Algebra Project, TMA4205
 
+    Parameters
+    ----------
+    ec : numpy.array
+        matrix to be linear interpolated, size (M+1)x(M+1).
+    M : int
+        size of the matrix.
+
+    Returns
+    -------
+    ef : numpy.array
+        interpolation of ec, matrix of size (N+1)x(N+1).
+
+    """
     # N, assumed that N is even
     # Note if N was odd this does not work!
     N = 2 * M
     ef = np.zeros((N + 1, N + 1))
-
+    
     # Coarse and fine index
     c_index = np.arange(M + 1)
     f_2index = 2 * c_index
-
+    
     # Indecies
     c_ixy = np.ix_(c_index, c_index)
     f_ixy = np.ix_(f_2index, f_2index)
-    ef[f_ixy] = ec[c_ixy]
 
     c_ixy_xm1 = np.ix_(c_index[:-1], c_index)
     c_ixp_y = np.ix_(c_index[:-1] + 1, c_index)
@@ -46,7 +71,7 @@ def interpolation(ec, M):
     c_ixy_ym1 = np.ix_(c_index, c_index[:-1])
     c_ix_yp = np.ix_(c_index, c_index[:-1] + 1)
     f_ix_yp = np.ix_(f_2index, f_2index[:-1] + 1)
-
+    
     c_ixy_xym1 = np.ix_(c_index[:-1], c_index[:-1])
     c_ixp_y_ym1 = np.ix_(c_index[:-1] + 1, c_index[:-1])
     c_ix_yp_xm1 = np.ix_(c_index[:-1], c_index[:-1] + 1)
@@ -54,6 +79,7 @@ def interpolation(ec, M):
     f_ixp_yp = np.ix_(f_2index[:-1] + 1, f_2index[:-1] + 1)
 
     # the interpolation
+    ef[f_ixy] = ec[c_ixy] # known nodes
     ef[f_ixp_y] = 0.5 * (ec[c_ixy_xm1] + ec[c_ixp_y])
     ef[f_ix_yp] = 0.5 * (ec[c_ixy_ym1] + ec[c_ix_yp])
     ef[f_ixp_yp] = 0.25 * (ec[c_ixy_xym1] + ec[c_ixp_y_ym1] + ec[c_ix_yp_xm1] + ec[c_ixp_yp])
@@ -61,6 +87,31 @@ def interpolation(ec, M):
 
 
 def Estimate_Error(u_hNdict, N_list):
+    """
+    Function to make a error estimate
+
+    Parameters
+    ----------
+    u_hNdict : dictionary
+        dictionary containing multiple dictionary of u_hdict.
+        u_hdict : dictionary
+        dictionary of three (u_h, t_i)-values, where t_i is the time stamp for when u_h is.
+     N_list : list
+        A list containing N's to plot a mesh for.
+        N : int
+        Number of nodal edges on the x-axis.
+
+    Raises
+    ------
+    ValueError
+        If the N-s in N_list must be multiples of 2 of the first element in N_list..
+
+    Returns
+    -------
+    error_dict : dictionary
+        dictionary of the relative errors for three different time stamps.
+
+    """
 
     Nbar = N_list[-1]
     u_hdictbar = u_hNdict[Nbar]
@@ -78,7 +129,9 @@ def Estimate_Error(u_hNdict, N_list):
     u_h1bar = u_hdictbar[1][0].reshape((Nbar+1, Nbar+1))
     u_h2bar = u_hdictbar[2][0].reshape((Nbar+1, Nbar+1))
 
+    # number of N-s
     m = len(N_list)
+    # initilize error_dict
     error_dict = {0: np.zeros(m-1), 1: np.zeros(m-1), 2: np.zeros(m-1)}  # there are 3 timestamps in u_hdict
 
     for i in range(m - 1):
@@ -104,11 +157,12 @@ def Estimate_Error(u_hNdict, N_list):
             u_h1 = interpolation(u_h1, M)
             u_h2 = interpolation(u_h2, M)
             M *= 2
-
+        
+        # the error
         err0 = u_h0bar - u_h0
         err1 = u_h1bar - u_h1
         err2 = u_h2bar - u_h2
-
+        # save the relative error
         error_dict[0][i] = np.linalg.norm(err0, ord="fro") / np.linalg.norm(u_h0bar, ord="fro")
         error_dict[1][i] = np.linalg.norm(err1, ord="fro") / np.linalg.norm(u_h1bar, ord="fro")
         error_dict[2][i] = np.linalg.norm(err2, ord="fro") / np.linalg.norm(u_h2bar, ord="fro")
@@ -118,6 +172,54 @@ def Estimate_Error(u_hNdict, N_list):
 
 def get_error_estimate(f, uD, duDdt, u0, Nt, N_list=None, beta=5, alpha=9.62e-5, theta=0.5, T=2*np.pi,
                        Rg_indep_t=True, f_indep_t=False):
+    """
+    Function to get the error estimate using the theta method.
+    Note: function is faster given that Rg_indep_t=True and f_indep_t=True, 
+    meaning we assume that the boundary function and the source function are independent of t.
+
+    Parameters
+    ----------
+    f : function pointer
+        The source function.
+    uD : function pointer
+        Value of u_h on the boundary.
+    duDdt : function pointer
+        Derivative of u_h on the boundary, derivative of uD.
+    u0 : function pointer
+        initial function for t=0.
+    Nt : int
+        number of time steps
+    N_list : list, optional
+        list of N-s. The default is None.
+    beta : float, optional
+        parameter beta of the source function. The default is 5.
+    alpha : float, optional
+        parameter alpha of the equation. The default is 9.62e-5.
+    heta : float, optional
+        parameter for the time integration method.
+        0: Forward Euler
+        0.5: Implicit Traps
+        1: Backward Euler
+        The default is 0.5.
+    T : float, optional
+        The end time of the interval [0, T]. The default is 2*np.pi.
+    Rg_indep_t : bool, optional
+        Is the boundary function independent of t. The default is True.
+    f_indep_t : bool, optional
+        Is the source function independent of t. The default is False.
+
+    Returns
+    -------
+    N_list : list
+        list of N-s.
+    error_dict : dictionary
+        dictionary of relative errors.
+    time_vec1 : numpy.array
+        Array of times to solve the heat equation.
+    time_stamps : numpy.array
+        Array of the time stamps.
+
+    """
     if N_list is None:
         N_list = [1, 2, 4, 8, 32]
     m = len(N_list)
